@@ -1,7 +1,7 @@
 CC ?= gcc
 CCPP ?= g++
 
-LNAME = satCode
+LNAME = satskymap
 L = lib$(LNAME).a
 LIBSO = lib$(LNAME).so
 
@@ -31,7 +31,7 @@ LIBFILES = $(LIBOBJS:.o=.c)
 EXE = sat_skymap
 MAIN = $(EXE:=.c)
 
-EXTRAFILES = Makefile norad.h norad_in.h observe.h hubble.tle test.tle tle_retrive.sh $(HPXDIR)
+EXTRAFILES = Makefile norad.h norad_in.h observe.h const_def.h sat_skymap_def.h hubble.tle default.tle tle_retrive.sh $(HPXDIR)
 
 all: lib libso libhpx $(EXE)
 
