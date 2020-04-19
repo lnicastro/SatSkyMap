@@ -4,7 +4,7 @@ as seen from a given point on Earth at a given epoch.
 Single satellite info, regardless of its position can be requested, too.
 The executable tool name is `sat_skymap`.
 
-An interactive [web tool](https://cats.oas.inaf.it/SkySat/) is available at INAF OAS Bologna.
+An interactive [web tool](https://cats.oas.inaf.it/SatSkyweb/) is available at INAF OAS Bologna.
 
 ## Requirements
 Two Lines Element (TLE) files, possibly with up to date parameters. See [here](https://celestrak.com/columns/v04n03/) for a description.

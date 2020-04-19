@@ -33,7 +33,7 @@ void ut2gmst(double ut1, double *gmst)
 
   T0 = (jd0 - JD2000)/36525.0;
 
-  /* Greenwich Mean Sidereal Time at 0h UT of date */
+/* Greenwich Mean Sidereal Time at 0h UT of date */
   *gmst = (((-2.0e-6*T0 - 3.e-7)*T0 + 9.27701e-2)*T0 + 8640184.7942063F)*T0
           + 24110.54841F;
 #ifdef DEBUG

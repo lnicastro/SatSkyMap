@@ -200,18 +200,83 @@ void add_params_json(Params p) {
 }
 
 void add_sundata_json(Sun sun) {
-  printf( "\"sun\": {"
-    "\"ra\":%7.3lf, \"dec\":%7.3lf, \"az\":%8.3lf, \"alt\":%7.3lf, \"parang\":%8.3lf, \"separation_deg\":%7.3lf}, "
+  printf("\"sun\": {"
+    "\"ra\":%7.3lf, \"dec\":%7.3lf, \"az\":%8.3lf, \"alt\":%7.3lf, \"parang\":%8.3lf, \"separation_deg\":%7.3lf}, ",
+    sun.ra, sun.dec, sun.az, sun.alt, sun.parang, sun.sep);
+}
+
+void add_fieldsdesc_json() {
+  printf(
     "\"data_fields\": {\"name\": [\"RA_start\", \"Dec_start\", \"RA_end\", \"Dec_end\", \"Distance\", \"Separation\", \"PA\", \"Speed\", \"HPXID_8\"], "
     "\"desc\": [\"RA T_ini\", \"Dec T_ini\", \"RA T_end\", \"Dec T_end\", \"distance to sat.\", \"angular separation\", \"position angle\", \"apparent angular rate of motion\", \"HEALPix order 8 nested schema ID\"], "
     "\"type\": [\"double\", \"double\", \"double\", \"double\", \"double\", \"float\", \"float\", \"float\", \"int\"], "
-    "\"unit\": [\"deg\", \"deg\", \"deg\", \"deg\", \"km\", \"deg\", \"deg\", \"arcmin/s\", \"\"]},",
-    sun.ra, sun.dec, sun.az, sun.alt, sun.parang, sun.sep);
+    "\"unit\": [\"deg\", \"deg\", \"deg\", \"deg\", \"km\", \"deg\", \"deg\", \"arcmin/s\", \"\"]},");
+}
+
+void add_satlatlon_json(double lat, double lon, double alt) {
+  printf( "\"geoloc\": {\"lat\":%7.3lf, \"lon\":%7.3lf, \"alt\":%9.2lf},", lat, lon, alt);
 }
 
 void close_stat_json(int status, char *errmsg, int n_sats_found, int n_sats) {
   printf(" \"status\": %d, \"errmsg\": \"%s\", \"n_sats_found\": %d, \"n_sats\": %d"
 	"}\n", status, errmsg, n_sats_found, n_sats);
+}
+
+
+/* GMST in hours. Reference:  The 1992 Astronomical Almanac, page B6. */
+/*
+static inline double myThetaG( double jd)
+{
+  const double omega_E = 1.00273790934;  // Earth rotations per sidereal day (non-constant)
+  const double UT = fmod(jd + .5, 1.);
+  double t_cen, GMST;
+
+  t_cen = (jd - UT - JD2000) / 36525.;
+  GMST = 24110.54841 + t_cen * (8640184.812866 + t_cen * (0.093104 - t_cen * 6.2E-6));
+
+  GMST = fmod( GMST + SEC_IN_DAY * omega_E * UT, SEC_IN_DAY);
+  if( GMST < 0.)
+     GMST += SEC_IN_DAY;
+
+  return(24. * GMST / SEC_IN_DAY);
+  }
+*/
+
+
+/* Compute satellite geodetic Lon, Lat and Alt position given its ECI position and GMST.
+ * Returned values are deg, deg, km.
+ * */
+void sat_geoLocation(double gmst, double *pos,  double *lon, double *lat, double *alt) {
+  double r, e2, phi, sinphi, c;
+  const double xkmper = 6.378137e3;      /* WGS 84 Earth radius km */
+  const double f = 3.35281066474748e-3;  /* Flattening factor */
+
+  double theta = atan2(pos[1], pos[0]) * RAD2DEG;  /* degrees */
+  //lon = (theta - gmst) % TWOPI;
+  *lon = (theta - gmst * 15.);
+//if (*lon > 360.)
+  if (*lon > 180)
+	*lon -= 360.;
+//else if (*lon < 360.)
+  else if (*lon < -180.)
+	*lon += 360.;
+
+  r = sqrt(pos[0]*pos[0] + pos[1]*pos[1]);
+  e2 = f * (2. - f);
+  *lat = atan2(pos[2], r);
+
+  do {
+	phi = *lat;
+	sinphi = sin(phi);
+	c = 1. / sqrt(1. - e2 * sinphi*sinphi);
+	*lat = atan2(pos[2] + xkmper * c * e2 * sinphi, r);
+  } while (fabs(*lat - phi) >= 1e-10);
+
+  *alt = r/cos(*lat) - xkmper * c;  /* kilometers */
+
+  *lat *= RAD2DEG;  /* degrees */
+   if (*lat > 90.)
+	*lat -= 360.;
 }
 
 
@@ -387,19 +452,26 @@ int main(int argc, char **argv)
 
   p.tle_file_name = argv[1];
 
-  p.lmst = lst_hr(jd, p.lon);  // Local Mean Sidereal Time
+  double gmst;
+  p.lmst = lst_hr(jd, p.lon, &gmst);  // Local Mean Sidereal Time
+//printf("lst_hr gmst: %lf\n", gmst);
+//double tmp = myThetaG(jd);
+//printf("ThetaG: %lf\n", tmp);
 
 // For single satellite, use zenith coords if not given
-  if ( (p.single_sat_n || p.single_sat_i) &&  ! in_region ) {
+  if ( (p.single_sat_n || p.single_sat_i) && !in_region ) {
 	p.ra_deg = p.lmst * 15.;  
 	p.de_deg = p.lat;
-  }
+	hareg = 0.;
+	//p.az = 0;
+	//p.alt = 90.;
+  } else
+	hareg = p.lmst - p.ra_deg / 15.;
 
-   target_ra = p.ra_deg * DEG2RAD;
-   target_dec = p.de_deg * DEG2RAD;
+  target_ra = p.ra_deg * DEG2RAD;
+  target_dec = p.de_deg * DEG2RAD;
 
-  hareg = p.lmst - target_ra/HRS2RAD;
-  p.alt = dechalat2alt(target_dec, hareg, p.lat, &p.az, &p.parang);
+  dechalat2alt(target_dec, hareg, p.lat, &p.alt, &p.az, &p.parang);
 
   add_params_json(p);
 
@@ -411,7 +483,7 @@ int main(int argc, char **argv)
   sun.sep = skysep_h(target_ra, target_dec, sun.ra, sun.dec);
  
   hasun = p.lmst - sun.ra/HRS2RAD;
-  sun.alt = dechalat2alt(sun.dec, hasun, p.lat, &sun.az, &sun.parang);
+  dechalat2alt(sun.dec, hasun, p.lat, &sun.alt, &sun.az, &sun.parang);
 
   sun.ra *= RAD2DEG;
   sun.dec *= RAD2DEG;
@@ -551,17 +623,28 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 		exit(1);
 	}
 
+/* For single satellite also report its Lat, Lon */
+	if ( p.single_sat_i || p.single_sat_n ) {
+		double sat_lat, sat_lon, sat_alt;
+		sat_geoLocation(gmst, pos,  &sat_lon, &sat_lat, &sat_alt);
+//printf("\n sat_lat, sat_lon, sat_alt: %lf, %lf, %lf, \n", sat_lat, sat_lon, sat_alt);
+		add_satlatlon_json(sat_lat, sat_lon, sat_alt);
+
+	}
+
 	epoch_of_date_to_j2000(jd, &ra, &dec);  /* Approx precession. Returned RA, Dec in radians. */
 
-/* Compute position delta_time seconds later, so we can
+/* Compute position delta_time seconds later to
  * 1. check if object enters the requested region,
- * 2. compute speed/PA of motion (and then plot motion direction)
+ * 2. compute speed/PA of motion (and then motion direction)
  */
 	t_since += TIME_EPSILON * p.delta_time * 1440.;
+
 	if ( is_deep )
              SDP4(t_since, &tle, sat_params, pos, NULL);
 	else
              SGP4(t_since, &tle, sat_params, pos, NULL);
+
 	get_satellite_ra_dec_delta(observer_loc2, pos, &ra1, &dec1, &unused_delta2);
 	epoch_of_date_to_j2000(jd, &ra1, &dec1);
 
@@ -590,22 +673,22 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
             line1[16] = '\0';
             double speed, posn_ang_of_motion;
 
-  if ( ! p.single_sat_i ) {
+	    if ( ! p.single_sat_i ) {
 	    //char intl_desig[12] = {"none"};
 
-	    if ( tle.intl_desig[0] != ' ' ) {
-	      short launch_year;
-	      strncpy(intl_desig, tle.intl_desig, 2);
-	      sscanf(intl_desig, "%hd", &launch_year);
-	      if ( launch_year > 99 )
-		strcpy(intl_desig, "20");
-	      else
-		strcpy(intl_desig, "19");
-	      strncat(intl_desig, tle.intl_desig, 2);
-	      strcat(intl_desig, "-");
-	      strcat(intl_desig, &line1[11]);
+	      if ( tle.intl_desig[0] != ' ' ) {
+	        short launch_year;
+	        strncpy(intl_desig, tle.intl_desig, 2);
+	        sscanf(intl_desig, "%hd", &launch_year);
+	        if ( launch_year > 99 )
+		  strcpy(intl_desig, "20");
+	        else
+		  strcpy(intl_desig, "19");
+	        strncat(intl_desig, tle.intl_desig, 2);
+	        strcat(intl_desig, "-");
+	        strcat(intl_desig, &line1[11]);
+	      }
 	    }
-  }
 
 	    if ( ! header_line_shown ) {
 		if ( ! p.info_only )
@@ -630,11 +713,14 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	    ang2pix_nest(nside, theta, ra, &id8nest);
 //printf( "RA, Dec, ID: %lf %lf  %ld\n", ra, dec, id8nest);
 
-	    if ( ! p.info_only ) {
+	    if ( !p.info_only ) {
 		if ( n_sats_found > 0 )
 		  printf(", ");
+		else
+		  add_fieldsdesc_json();
+
 //if ( single_sat_found || (!p.single_sat_n && !p.single_sat_i) )
-		printf( "{\"name\": \"%s\", \"intl_desig\": \"%s\", \"norad_n\": %d, \"data\": [%8.4lf,%8.4lf,%8.4lf,%8.4lf,%8.1lf,%6.4lf,%3d,%6.3lf,%ld]}",
+		printf( "{\"name\": \"%s\", \"intl_desig\": \"%s\", \"norad_n\": %d, \"data\": [%8.4lf,%8.4lf,%8.4lf,%8.4lf,%9.2lf,%6.4lf,%3d,%6.3lf,%ld]}",
 			sat_name, intl_desig, tle.norad_number, ra * RAD2DEG, dec * RAD2DEG, ra1 * RAD2DEG, dec1 * RAD2DEG,
 			sep_to_satellite, ang_sep,
 			(int)(posn_ang_of_motion * RAD2DEG), speed, id8nest);

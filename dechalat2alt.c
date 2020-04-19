@@ -10,47 +10,71 @@
 
 #include "const_def.h"
 
-double dechalat2alt(double dec, double ha, double lat, double *az, double *parang)
+void dechalat2alt(double dec, double ha, double lat, double *alt, double *az, double *parang)
 {
-        double x,y,z;
-        double sinp, cosp;  /* sin and cos of parallactic angle */
-        double cosdec, sindec, cosha, sinha, coslat, sinlat;
+  double cosha, sinha, sinlat;
+  double sinp, cosp;  /* sin and cos of parallactic angle */
+  double sinaz, cosaz;
 
-        ha = ha * HRS2RAD;
-        lat = lat * DEG2RAD;  /* thank heavens for pass-by-value */
-        cosdec = cos(dec); sindec = sin(dec);
-        cosha = cos(ha); sinha = sin(ha);
-        coslat = cos(lat); sinlat = sin(lat);
-        x = RAD2DEG * asin(cosdec*cosha*coslat + sindec*sinlat);
-        y =  sindec*coslat - cosdec*cosha*sinlat; /* due N comp. */
-        z =  -1. * cosdec*sinha; /* due east comp. */
-        *az = atan2(z,y);
+  lat = lat * DEG2RAD;
+  double cosdec = cos(dec), sindec = sin(dec), coslat = cos(lat);
 
-        /* as it turns out, having knowledge of the altitude and
-           azimuth makes the spherical trig of the parallactic angle
-           less ambiguous ... so do it here!  Method uses the
-           "astronomical triangle" connecting celestial pole, object,
-           and zenith ... now know all the other sides and angles,
-           so we can crush it ... */
 
-        if(cosdec != 0.) { /* protect divide by zero ... */
-           sinp = -1. * sin(*az) * coslat / cosdec;
-                /* spherical law of sines .. note cosdec = sin of codec,
- *                         coslat = sin of colat .... */
-           cosp = -1. * cos(*az) * cosha - sin(*az) * sinha * sinlat;
-                /* spherical law of cosines ... also transformed to local
- *                       available variables. */
-           *parang = atan2(sinp,cosp) * RAD2DEG;
-                /* let the library function find the quadrant ... */
-        }
-        else { /* you're on the pole */
-           if(lat >= 0.) *parang = 180.;
-           else *parang = 0.;
-        }
+/* Manage peculiar cases and calculate Azimuth */
+  if ( ha == 0. ) {
+	*az = 0.;
+	cosha = 1.;
+	cosaz = 1.;
+	sinha = 0.;
+	sinaz = 0.;
+	sinp  = 0.;
+	cosp = -1;
+  } else {
+	ha = ha * HRS2RAD;
+	cosha = cos(ha);
+	sinha = sin(ha);
+	if (coslat < 1e-6) {  /* very close to a pole: assume +/- 90 deg */
+	  coslat = 0.;
+	  if (lat < 0.)
+	    sinlat = -1.;
+	  else
+	    sinlat = 1.;
+          *az = ha;
+	  sinaz = sinha;
+	  cosaz = cosha;
+	  sinp  = 0.;
+	  cosp  = -1. * cosha*cosha - sinha*sinha;
+	} else {
+	  sinlat = sin(lat);
 
-        *az *= RAD2DEG;  /* done with taking trig functions of it ... */
-        while(*az < 0.) *az += 360.;  /* force 0 -> 360 */
-        while(*az >= 360.) *az -= 360.;
+          *az = atan2(-1. * cosdec*sinha, sindec*coslat - cosdec*cosha*sinlat);  /* due east, due north comp. */
 
-        return(x);
+	  sinaz = sin(*az);
+	  cosaz = cos(*az);
+
+	  *az *= RAD2DEG;  /* done with taking trig functions of it ... */
+          if (*az < 0.) *az += 360.;  /* force 0 -> 360 */
+          if (*az >= 360.) *az -= 360.;
+          if (cosdec != 0.) { /* protect divide by zero ... */
+	    sinp = -1. * sinaz * coslat / cosdec;
+	    cosp = -1. * cosaz * cosha - sinaz * sinha * sinlat;
+	  }
+	}
+  }
+
+/* Parallactic angle */
+  if (cosdec != 0.) { /* protect divide by zero ... */
+	*parang = atan2(sinp,cosp) * RAD2DEG;  /* let the library function find the quadrant */
+  } else {  /* pole */
+	if (lat >= 0.)
+	   *parang = 180.;
+	else
+	   *parang = 0.;
+   }
+
+/* Altitude */
+  if ( fabs(dec - lat) < 1e-6 )
+	*alt = 90.;
+  else
+	*alt = RAD2DEG * asin(cosdec*cosha*coslat + sindec*sinlat);
 }

@@ -54,7 +54,7 @@ printf("GMST0: %lf\n", GMST);
      GMST += SEC_IN_DAY;
 
 #ifdef DEBUG
-printf("gmst: %lf\n", 24. * GMST/SEC_IN_DAY);
+printf("ThetaG-gmst: %lf\n", 24. * GMST/SEC_IN_DAY);
 #endif
 
 
