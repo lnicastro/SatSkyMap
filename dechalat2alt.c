@@ -30,7 +30,7 @@ void dechalat2alt(double dec, double ha, double lat, double *alt, double *az, do
 	sinp  = 0.;
 	cosp = -1;
   } else {
-	ha = ha * HRS2RAD;
+	ha = ha * 15 * DEG2RAD;
 	cosha = cos(ha);
 	sinha = sin(ha);
 	if (coslat < 1e-6) {  /* very close to a pole: assume +/- 90 deg */
