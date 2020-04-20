@@ -29,6 +29,7 @@ void dechalat2alt(double dec, double ha, double lat, double *alt, double *az, do
 	sinaz = 0.;
 	sinp  = 0.;
 	cosp = -1;
+	sinlat = sin(lat);
   } else {
 	ha = ha * 15 * DEG2RAD;
 	cosha = cos(ha);
