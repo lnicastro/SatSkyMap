@@ -1,7 +1,5 @@
 /*
-
-  Define useful constants
-
+  Define useful constants.
 */
 
 #ifndef CONST_DEF_H
@@ -20,9 +18,6 @@
 /* radians to degrees */
 #define RAD2DEG 57.295779513082320876798155
 
-/* hours to radians */
-#define HRS2RAD 0.26179938779914943653855361527329190701643078328126
-
 /* radians to hours */
 #define RAD2HRS 3.8197186342054880584532103209403446888270314977709
 
@@ -33,7 +28,5 @@
 
 /* seconds in a day */
 #define SEC_IN_DAY 86400.
-
-#define TIME_EPSILON (1./SEC_IN_DAY)  // 1s
 
 #endif

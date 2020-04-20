@@ -21,7 +21,7 @@ LDLIBS = $(HPXLIB) $(L) -lm
 DESTLIB = /usr/local/lib
 BINDIR = ${HOME}/bin
 
-VER = v01d_`/bin/date +"%Y%m%d"`
+VER = v02b_`/bin/date +"%Y%m%d"`
 dist = $(LNAME)_$(VER)
 
 
@@ -31,7 +31,7 @@ LIBFILES = $(LIBOBJS:.o=.c)
 EXE = sat_skymap
 MAIN = $(EXE:=.c)
 
-EXTRAFILES = Makefile norad.h norad_in.h observe.h const_def.h sat_skymap_def.h hubble.tle default.tle tle_retrive.sh $(HPXDIR)
+EXTRAFILES = Makefile norad.h norad_in.h observe.h const_def.h sat_skymap_def.h stations.txt default.tle tle_retrive.sh $(HPXDIR)
 
 all: lib libso libhpx $(EXE)
 

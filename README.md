@@ -7,9 +7,9 @@ The executable tool name is `sat_skymap`.
 An interactive [web tool](https://cats.oas.inaf.it/SatSkyweb/) is available at INAF OAS Bologna.
 
 ## Requirements
-Two Lines Element (TLE) files, possibly with up to date parameters. See [here](https://celestrak.com/columns/v04n03/) for a description.
+Two Lines Element (TLE) files, possibly with *up-to-date parameters*. See [here](https://celestrak.com/columns/v04n03/) for a description.
 
-Two files, `default.tle` and `hubble.tle`, are provided for testing purpose only.
+Two files, `default.tle` and `stations.txt`, are provided for testing purpose only.
 
 The shell script `tle_retrive.sh` is provided for automatic retrieval of TLE files from [CeleStrak](https://celestrak.com/).
 The two files `ALL_merged.lis` and `ALL_merged_nodeb.lis` list the retrieved files, including/excluding the debris objects, respectively.
@@ -35,7 +35,7 @@ Usage:
 
 OPTIONS are:
   -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
-  -i sat_intnlname	Single satellite selection via its international designator (region ignored)
+  -i sat_intnlname	(TODO) Single satellite selection via its international designator (region ignored)
   -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
   -l Lat,Lon,Height	Observation site (comma separated data with no spaces)
   -n MaxSats		Maximum number of satellites to return (def. 1000)
@@ -43,17 +43,18 @@ OPTIONS are:
   -r radius		Region radius centered at the given coords
   -s sat_norad_n	Single satellite selection via its NORAD number (region ignored)
   -t deltat		Second epoch delta time (s, def. 1)
-  -D DirTLEs		Directory with the repository of TLE files
+  -D DirTLEs		Directory with the repository of TLE files (def ./; ignore -T option)
 
 Switches:
   -h			print this help
   -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)
   -I			Information about the returned data and number of satellites found
  			('satellites' object not returned)
+  -T			Use default repository directory for TLE files (see sat_skymap_def.h; def. ./) 
 
 Example usage:
   sat_skymap default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20
-  sat_skymap stations.txt -H -D/usr/local/TLErepo -l44.52804,11.33715,23.5 -j58941.71931 -s 25544
+  sat_skymap stations.txt -H -l44.52804,11.33715,23.5 -j58941.71931 -s 25544
 ```
 
 The space after the option character is optional.
@@ -75,10 +76,10 @@ Scan the TLE element file 'default.tle' for satellites visible from
 
 Positions at given JD + deltat (def. 1) s is also computed and returned.
 Additional computed info:
--  Local Mean Sidereal Time
--  region Az, Alt, Parang
--  Sun RA/Dec, Alt/Az coordinates.
-
+-  Local Mean Sidereal Time and Greenwich Mean Sidereal Time (hours)
+-  Region Az, Alt, Parang
+-  Sun RA/Dec, Alt/Az coordinates
+-  Geodetic Lon, Lat, Alt and theta (*for single satellite enquire*)
 
 ```
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -j58861.5 -p90.5,-30.3 -r20
@@ -87,9 +88,9 @@ Additional computed info:
   {
   "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-16", "version": "0.1d"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "long": -70.7381, "height":  2400.0],
-    "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
-    "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "lmst": 14.7803, "delta_time_s": 1, "max_sats": 1000,
-    "notes": "All coordinates and radius in degrees. LMST in hrs."},
+    "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
+    "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
+    "notes": "All coordinates and radius in degrees. GMST, LMST in hrs."},
   "sun": {"ra":294.566, "dec":-21.517, "az": 101.818, "alt": 24.735, "parang":-113.376, "separation_deg":123.255},
   "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
     "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
@@ -107,45 +108,65 @@ It is:
 -  Distance: distance to satellite in *km*,
 -  Separation: angular separation from the search point in *degrees*,
 -  PA: position angle of motion in *degrees*,
--  Speed: apparent angular rate of motion in *arcminutes/second* (or *degrees/minute*),
+-  Speed: apparent angular rate of motion in *arcminutes/second* (== *degrees/minute*),
 -  HPXID_8: HEALPix order 8 nested schema ID
 
 
 **ISS position (NORAD ID = 25544)**
+
 JSON shown in expanded format.
 ```
+./sat_skymap stations.txt -H -l44.52804,11.33715,23.5 -j58959.53 -s 25544
+
 {   "swinfo":{
       "name":"sat_skymap",
       "author":"L. Nicastro @ INAF-OAS",
-      "date":"2020-04-16",
-      "version":"0.1d"
-
+      "date":"2020-04-20",
+      "version":"0.2b"
+   
 },
-   "input_params":{      "tle_file":"stations.txt",
+   "input_params":{  "tle_file":"stations.txt",
       "location":{
          "lat":44.5280,
          "long":11.3371,
          "height":23.5
-
+      
 },
-      "mjd":58941.71931,
-      "epoch_UTC":"2020-04-02T17:15:48",
-      "lmst":6.7866,
+      "region":{
+         "ra":51.2026,
+         "dec":44.5280,
+         "radius":20.0000,
+         "lmst":3.4135,
+         "az":0.0000,
+         "alt":90.0000,
+         "parang":180.000
+      
+},
+      "mjd":58959.53000,
+      "epoch_UTC":"2020-04-20T12:43:12",
+      "gmst":2.6577,
       "delta_time_s":1,
       "max_sats":1000,
-      "notes":"All coordinates and radius in degrees. LMST in hrs."
-
+      "notes":"All coordinates and radius in degrees. GMST, LMST in hrs."
+   
 },
    "sun":{
-      "ra":12.353,
-      "dec":5.298,
-      "az":273.396,
-      "alt":4.107,
-      "parang":45.619,
-      "separation_deg":82.530
-
+      "ra":28.769,
+      "dec":11.785,
+      "az":217.381,
+      "alt":52.026,
+      "parang":26.240,
+      "separation_deg":37.974
+   
 },
-   "data_fields":{      "name":[
+   "geoloc":{
+      "lat":-44.174,
+      "lon":103.841,
+      "alt":433.24,
+      "theta":143.706
+   
+},
+   "data_fields":{  "name":[
          "RA_start",
          "Dec_start",
          "RA_end",
@@ -155,8 +176,8 @@ JSON shown in expanded format.
          "PA",
          "Speed",
          "HPXID_8"
-
-],
+      
+	],
       "desc":[
          "RA T_ini",
          "Dec T_ini",
@@ -167,8 +188,8 @@ JSON shown in expanded format.
          "position angle",
          "apparent angular rate of motion",
          "HEALPix order 8 nested schema ID"
-
-],
+      
+	],
       "type":[
          "double",
          "double",
@@ -179,8 +200,8 @@ JSON shown in expanded format.
          "float",
          "float",
          "int"
-
-],
+      
+	],
       "unit":[
          "deg",
          "deg",
@@ -191,28 +212,26 @@ JSON shown in expanded format.
          "deg",
          "arcmin/s",
          ""
-
-]
-
+	]
+   
 },
-   "satellites":[      {         "name":"ISS (ZARYA)",
+   "satellites":[  {  "name":"ISS (ZARYA)",
          "intl_desig":"1998-067A ",
          "norad_n":25544,
          "data":[
-            249.7761,
-            -45.8183,
-            249.8236,
-            -45.8294,
-            12257.7,
-            101.5945,
-            108,
-            2.096,
-            675636
-
-]
-
+            185.2172,
+            -53.2256,
+            185.2753,
+            -53.2252,
+            11436.45,
+            149.1219,
+            89,
+            2.087,
+            690893
+	]
+      
 }
-
+   
 ],
    "status":0,
    "errmsg":"",
@@ -222,7 +241,7 @@ JSON shown in expanded format.
 ```
 
 ## Acknowledgements
-Parts of the code from [Project Pluto](https://www.projectpluto.com/), Bill Gray `sat_code` on [GitHub](https://github.com/Bill-Gray/sat_code).
+Parts of the code from [Project Pluto](https://www.projectpluto.com/), Bill Gray's `sat_code` on [GitHub](https://github.com/Bill-Gray/sat_code).
 
 TLE files from [CeleStrak](https://celestrak.com/).
 

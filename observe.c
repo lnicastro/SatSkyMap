@@ -110,7 +110,7 @@ More than accurate enough for our purposes.  */
 
 void DLL_FUNC epoch_of_date_to_j2000( const double jd, double *ra, double *dec)
 {
-   const double t_centuries = (jd - 2451545.) / 36525.;
+   const double t_centuries = (jd - JD2000) / 36525.;
    const double m = (3.07496 + .00186 * t_centuries / 2.) * DEG2RAD / 240.;
    const double n = (1.33621 - .00057 * t_centuries / 2.) * DEG2RAD / 240.;
    const double ra_rate  = m + n * sin( *ra) * tan( *dec);
