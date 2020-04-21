@@ -63,8 +63,9 @@
   "satellites": [{"name": "STARLINK-23", "intl_desig": "1919-029C ", "norad_n": 44237,
     "data": [ 77.5770, -17.4894,  77.6262, -17.4900,   7660.9,18.1955,  90,  2.818,339078]},
 
+  { ... }
 
-  { ... }}],
+  }],
   "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6
   }
 
@@ -256,14 +257,14 @@ static inline double myThetaG(double jd)
 
 
 /* Compute satellite geodetic Lon, Lat, Alt and theta (RA) position given its ECI position and GMST.
- * Returned values are deg, deg, km.
- * */
+   Returned values are deg, deg, km, deg.
+*/
 void sat_geoLocation(double gmst, double *pos,  Geoloc *geo) {
   double r, e2, phi, sinphi, c;
   const double ERAD = 6.3781366e3;        /* IERS Conventions (2003) Earth radius km */
   const double F = 3.352819697896193e-3;  /* IERS Conventions (2003) Earth ellipsoid flattening factor */
 
-  geo-> theta = atan2(pos[1], pos[0]) * RAD2DEG;  /* degrees */
+  geo->theta = atan2(pos[1], pos[0]) * RAD2DEG;  /* degrees */
   //lon = (theta - gmst) % TWOPI;
   geo->lon = (geo->theta - gmst * 15.);
 //if (geo->lon > 360.)
@@ -334,8 +335,8 @@ int main(int argc, char **argv)
 
 /* Note: no check on validity of input paramters! Could also use getarg. */
 
-  for( i = 1; i < argc; i++ )
-    if( argv[i][0] == '-') {
+  for ( i = 1; i < argc; i++ )
+    if ( argv[i][0] == '-' ) {
 		opt = argv[i][1];
 		par_pos = 2;
 		if ( argv[i][2] == 0 ) {  /* blank after option */
@@ -628,7 +629,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
             SGP4(t_since, &tle, sat_params, pos, NULL);
 	}
 	get_satellite_ra_dec_delta(observer_loc, pos, &ra, &dec, &sep_to_satellite);
-/* For malformed or partial tle (eg Bepi-Colombo) this could happen */
+/* For malformed or partial tle (e.g. Bepi-Colombo) this could happen */
 	if ( isnan(ra) || isnan(dec) ) {
 		sprintf(errmsg, "Could not decode properly TLE data");
 		close_stat_json(2, errmsg, n_sats_found, n_sats);

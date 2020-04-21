@@ -15,18 +15,20 @@ The shell script `tle_retrive.sh` is provided for automatic retrieval of TLE fil
 The two files `ALL_merged.lis` and `ALL_merged_nodeb.lis` list the retrieved files, including/excluding the debris objects, respectively.
 
 ## Compile and install
-Code meant for Unix/Linux OS (including Mac OS). Just run `make` and move `sat_skymap` to your preferred folder. 
+Code meant for Unix/Linux OS (including Mac OS). Can be easily adapted for Windows.
+Just run `make` and move `sat_skymap` to your preferred folder. 
 
 ## Procedure
 Use the Near-Earth type (SGP4) and Deep-Space type Ephemeris (SDP4) satellite motion model
 to find those present in a given sky region at a given time observing from a given site on Earth.
 
-`sat_skymap` requires as input
-1. a TLE file (first command-line argument),
-2. the observer position,
-3. the region RA/Dec (J2000) and search radius,
+`sat_skymap` requires as input:
+1. a TLE file (*first command-line argument*),
+2. the observer position (geodetic Lon, Lat, Alt),
+3. the (circular) region RA/Dec (J2000) and search radius,
 4. date/time.
-Invoke the tool without parameters to use predefined parameters. Use the `-h` switch for help:
+
+Invoke the tool without parameters to see predefined parameters and example. Use the `-h` switch for help:
 
 ```shell
 % ./sat_skymap -h
@@ -69,6 +71,7 @@ A JSON string with information about the satellites in the FoV (see below).
 
 ## Examples
 **ESO La Silla Observatory**
+
 Scan the TLE element file 'default.tle' for satellites visible from
 -  (lat, lon, height) = (-29.25627, -70.7380, 2400),
 -  on MJD 58861.5 (UTC: 2020-01-13 12h = 2020-01-13T12:00:00),
@@ -86,7 +89,7 @@ Additional computed info:
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -d2020-01-13T12:00:00 -p90.5,-30.3 -r20
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-16", "version": "0.1d"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-20", "version": "0.2b"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "long": -70.7381, "height":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -99,8 +102,9 @@ Additional computed info:
   "satellites": [{"name": "STARLINK-23", "intl_desig": "1919-029C ", "norad_n": 44237,
     "data": [ 77.5770, -17.4894,  77.6262, -17.4900,   7660.9,18.1955,  90,  2.818,339078]},
 
+  { ... }
 
-  { ... }}],
+  }],
   "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6
   }
 ```
