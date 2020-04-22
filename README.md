@@ -23,7 +23,7 @@ Use the Near-Earth type (SGP4) and Deep-Space type Ephemeris (SDP4) satellite mo
 to find those present in a given sky region at a given time observing from a given site on Earth.
 
 `sat_skymap` requires as input:
-1. a TLE file (*first command-line argument*),
+1. a TLE file (*first or last command-line argument*),
 2. the observer position (geodetic Lon, Lat, Alt),
 3. the (circular) region RA/Dec (J2000) and search radius,
 4. date/time.

@@ -7,7 +7,7 @@
     Single satelletite info, regardless of its position can be requested, too.
 
   Procedure:
-    The code reads in a TLE file (name provided as the first command-line
+    The code reads in a TLE file (name provided as the first or last command-line
     argument) with details of the observer position, search radius, date/time,
     and RA/Dec provided on the command line.
 
@@ -22,6 +22,7 @@
     -s sat_norad_n	Single satellite selection via its NORAD number (region ignored)
     -t deltat		Second epoch delta time (s, def. 1)
     -D DirTLEs		Directory with the repository of TLE files (def ./; ignore -T option)
+
   Switches:
     -h			print this help
     -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)
@@ -99,7 +100,7 @@
   }
 
 
-   LN @ INAF-OAS, Jan 2020.  Last change: 20/04/2020
+   LN @ INAF-OAS, Jan 2020.  Last change: 22/04/2020
 */
 
 #include <ctype.h>
@@ -333,7 +334,7 @@ int main(int argc, char **argv)
   p.use_deftledir = false; /* If default directory with TLE files should be used (def. ./) */
 
 
-/* Note: no check on validity of input paramters! Could also use getarg. */
+/* Note: no check on validity of input parameters! Could also use getarg. */
 
   for ( i = 1; i < argc; i++ )
     if ( argv[i][0] == '-' ) {
@@ -440,10 +441,16 @@ int main(int argc, char **argv)
 
   open_json();
 
-  if ( *argv[1] == '@' ) {
+
+/* TLE file passed as first or last parameter? */
+  int iarg = 1;
+  if ( argv[1][0] == '-' )
+	iarg = argc - 1;
+
+  if ( *argv[iarg] == '@' ) {
 	input_list = true;
 	//tle_list_file = ++argv[1];
-	sprintf(tle_list_file, "%s/%s", tle_path, ++argv[1]);
+	sprintf(tle_list_file, "%s/%s", tle_path, ++argv[iarg]);
 	if ( !(lisfile = fopen(tle_list_file, "rb")) ) {
 		sprintf(errmsg, "Couldn't open input file %s", tle_list_file);
   		close_stat_json(2, errmsg, n_sats_found, n_sats);
@@ -471,7 +478,7 @@ int main(int argc, char **argv)
 
   sbuff[0] = '\0';
 
-  p.tle_file_name = argv[1];
+  p.tle_file_name = argv[iarg];
 
 /* Local Mean Sidereal Time & GMST */
   //double gmst;
@@ -521,7 +528,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	char *lastchar;
 	if ( !input_list ) {
 		if ( strchr(tle_file_name, '/') == NULL )
-		  sprintf(tle_path_file, "%s/%s", tle_path, argv[1]);
+		  sprintf(tle_path_file, "%s/%s", tle_path, argv[iarg]);
 		else
 		  strcpy(tle_path_file, tle_file_name);
 
