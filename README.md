@@ -11,7 +11,7 @@ Two Lines Element (TLE) files, possibly with *up-to-date parameters*. See [here]
 
 Two files, `default.tle` and `stations.txt`, are provided for testing purpose only.
 
-The shell script `tle_retrive.sh` is provided for automatic retrieval of TLE files from [CeleStrak](https://celestrak.com/).
+The shell script `tle_retrieve.sh` (in `scripts`) is provided for automatic retrieval of TLE files from [CeleStrak](https://celestrak.com/).
 The two files `ALL_merged.lis` and `ALL_merged_nodeb.lis` list the retrieved files, including/excluding the debris objects, respectively.
 
 ## Compile and install
