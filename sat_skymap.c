@@ -185,7 +185,7 @@ void Usage() {
   "  -s sat_norad_n	Single satellite selection via its NORAD number (region ignored)\n"
   "  -t deltat		Second epoch delta time (s, def. 1)\n"
   "  -D DirTLEs		Directory with the repository of TLE files (def ./; ignore -T option)\n\n"
-  "Switches:\n"
+  "\nSwitches:\n"
   "  -h			print this help\n"
   "  -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)\n"
   "  -I			Information about the returned data and number of satellites found\n"
@@ -622,6 +622,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	 }
 
 	int is_deep = select_ephemeris(&tle);
+//printf("is_deep: %d\n", is_deep);
 	double sat_params[N_SAT_PARAMS], ang_sep, ang_sep1, d_ra, d_dec,
 		ra, dec, ra1, dec1, sep_to_satellite, t_since,
 		pos[3],  /* Satellite position vector */

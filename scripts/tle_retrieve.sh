@@ -4,6 +4,8 @@
 #
 # See: https://celestrak.com/NORAD/elements/
 #
+# To get TLE for a single sat, use the NORAD Id, e.g.: https://celestrak.com/satcat/tle.php?CATNR=44874
+#
 # Edit to match your needs.
 #
 # LN @ INAF-OAS Jan. 2020.  Last change: 22/04/2020
@@ -26,6 +28,7 @@ else
 	OUTDIR=$1
 fi
 
+# Goto destination directory
 cd $OUTDIR
 
 # List of most relevant TLE files
@@ -84,6 +87,13 @@ done
 	echo Retrieval failed.
   fi
 
+
+#
+# Produce the TLE list file for special satellites. Comment out if not needed.
+#
+awk '/HST|CXO|GLAST|SWIFT|NUSTAR|AGILE|INTEGRAL|ASTROSAT|HXMT|XMM|WISE|SDO/ { print ; for(n=0; n<2; n++) { getline ; print } }' science.txt > special.txt
+awk '/ZARYA/ { print ; for(n=0; n<2; n++) { getline ; print } }' stations.txt >> special.txt
+awk '/CHEOPS/ { print ; for(n=0; n<2; n++) { getline ; print } }' active.txt >> special.txt
 
 #
 # Produce the updated list of number of sats in the TLE file. Comment out if not needed.

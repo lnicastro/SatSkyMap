@@ -110,17 +110,19 @@ More than accurate enough for our purposes.  */
 
 void DLL_FUNC epoch_of_date_to_j2000( const double jd, double *ra, double *dec)
 {
-   const double t_centuries = (jd - JD2000) / 36525.;
-   const double m = (3.07496 + .00186 * t_centuries / 2.) * DEG2RAD / 240.;
-   const double n = (1.33621 - .00057 * t_centuries / 2.) * DEG2RAD / 240.;
-   const double ra_rate  = m + n * sin( *ra) * tan( *dec);
-   const double dec_rate = n * cos( *ra);
+  const double t_centuries = (jd - JD2000) / 36525.;
+  const double m = (3.07496 + .00186 * t_centuries / 2.) * DEG2RAD / 240.;
+  const double n = (1.33621 - .00057 * t_centuries / 2.) * DEG2RAD / 240.;
+  const double ra_rate  = m + n * sin( *ra) * tan( *dec);
+  const double dec_rate = n * cos( *ra);
 
-   *ra -= t_centuries * ra_rate * 100.;
-   *dec -= t_centuries * dec_rate * 100.;
+  *ra -= t_centuries * ra_rate * 100.;
+  *dec -= t_centuries * dec_rate * 100.;
 
 /* LN add: RA in 0 - 2pi range */
-   *ra = fmod(*ra + PI*10., 2*PI);
-   //if ( *ra < 0. ) 
-	//*ra += 2*PI;
+  //*ra = fmod(*ra + PI*10., TWOPI);
+  if ( *ra < 0. ) 
+	*ra += TWOPI;
+  else if ( *ra >= TWOPI )
+	*ra -= TWOPI;
 }
