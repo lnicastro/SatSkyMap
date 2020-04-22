@@ -435,7 +435,7 @@ int main(int argc, char **argv)
 	p.lon * DEG2RAD, rho_cos_phi, rho_sin_phi, observer_loc2);
  
   const short fname_len = 64;
-  char *s, row[fname_len], norad_name[6], tle_list_file[200];
+  char *s, row[fname_len], norad_name[7], tle_list_file[200];
   bool input_list = false;
   FILE *lisfile, *ifile;
 
@@ -586,7 +586,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 			short launch_year;
 			strncpy(intl_desig, tle.intl_desig, 2);
 			sscanf(intl_desig, "%hd", &launch_year);
-			if ( launch_year > 99 )
+			if ( launch_year < 50 || launch_year > 99 )
 			  strcpy(intl_desig, "20");
 			else
 			  strcpy(intl_desig, "19");
@@ -602,9 +602,10 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 // Single satellite requested?
 	 if ( (p.single_sat_i || p.single_sat_n) && !single_sat_found )
 		continue;
-
+// Add a , to make it unique, and skip any previously met satellite
+	 strcat(norad_name, ",");
 	 if ( (s = strstr(sbuff, norad_name)) != NULL ) {
-//printf("Found string at index = %d ... skipping.\n", s - sbuff);
+//printf("Found string '%s' at index = %ld ... skipping.\n", norad_name, s - sbuff);
 		continue;
 	 } else {
 		if ( use_bufflen >= cur_bufflen ) {
@@ -617,7 +618,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 		  }
 		}
 		strcat(sbuff, norad_name);
-		use_bufflen += 5;
+		use_bufflen += 6;
 	 }
 
 	int is_deep = select_ephemeris(&tle);
@@ -683,7 +684,6 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	   ang_sep1 = skysep_h(target_ra, target_dec, ra1, dec1);
 	}
 
-
 /* Check for single sat. or if in search area for both start and end epoch */
 	if ( p.single_sat_i || p.single_sat_n ||  /* for single satellite ignore region */
 	     ang_sep < p.search_radius || ang_sep1 < p.search_radius )  /* good enough */
@@ -696,7 +696,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	          short launch_year;
 	          strncpy(intl_desig, tle.intl_desig, 2);
 	          sscanf(intl_desig, "%hd", &launch_year);
-	          if ( launch_year > 99 )
+	          if ( launch_year < 50 || launch_year > 99 )
 		    strcpy(intl_desig, "20");
 	          else
 		    strcpy(intl_desig, "19");
