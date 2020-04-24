@@ -100,7 +100,7 @@
   }
 
 
-   LN @ INAF-OAS, Jan 2020.  Last change: 22/04/2020
+   LN @ INAF-OAS, Jan 2020.  Last change: 24/04/2020
 */
 
 #include <ctype.h>
@@ -482,7 +482,7 @@ int main(int argc, char **argv)
 
 /* Local Mean Sidereal Time & GMST */
   //double gmst;
-  p.lmst = lst_hr(jd, p.lon, &p.gmst);
+  p.lmst = lmst_hr(jd, p.lon, &p.gmst);
 
 /* For single satellite, use zenith coords if not given */
   if ( (p.single_sat_n || p.single_sat_i) && !in_region ) {
