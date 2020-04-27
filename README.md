@@ -40,7 +40,7 @@ OPTIONS are:
   -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
   -i sat_intnlname	(TODO) Single satellite selection via its international designator (region ignored)
   -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
-  -l Lat,Lon,Height	Observation site (comma separated data with no spaces)
+  -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)
   -n MaxSats		Maximum number of satellites to return (def. 1000)
   -p RA,Dec		J2000 sky coordinates of region to check
   -r radius		Region radius centered at the given coords
@@ -74,7 +74,7 @@ A JSON string with information about the satellites in the FoV (see below).
 **ESO La Silla Observatory**
 
 Scan the TLE element file 'default.tle' for satellites visible from
--  (lat, lon, height) = (-29.25627, -70.7380, 2400),
+-  (latitude, longitude, altitude) = (-29.25627, -70.7380, 2400),
 -  on MJD 58861.5 (UTC: 2020-01-13 12h = 2020-01-13T12:00:00),
 -  at (RA, Dec) = 90.5, +30.3 (deg), within a 20-deg search radius.
 
@@ -82,7 +82,7 @@ Positions at given JD + deltat (def. 1) s is also computed and returned.
 Additional computed info:
 -  Local Mean Sidereal Time and Greenwich Mean Sidereal Time (hours)
 -  Region Az, Alt, Parang
--  Sun RA/Dec, Alt/Az coordinates
+-  Sun RA/Dec, Alt/Az, geodetic longitude coordinates, parallactic angle and distance from region center (or zenith).
 -  Geodetic Lon, Lat, Alt and theta (*for single satellite enquire*)
 
 ```
@@ -91,11 +91,11 @@ Additional computed info:
 
   {
   "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-20", "version": "0.2b"},
-  "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "long": -70.7381, "height":  2400.0],
+  "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
     "notes": "All coordinates and radius in degrees. GMST, LMST in hrs."},
-  "sun": {"ra":294.566, "dec":-21.517, "az": 101.818, "alt": 24.735, "parang":-113.376, "separation_deg":123.255},
+  "sun": {"ra":294.566, "dec":-21.517, "az": 101.818, "alt": 24.735, "lon":   2.123, "parang":-113.376, "separation_deg":123.255},
   "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
     "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
     "type": ["double", "double", "double", "double", "double", "float", "float", "float", "int"],
@@ -123,20 +123,23 @@ JSON shown in expanded format.
 ```
 ./sat_skymap stations.txt -H -l44.52804,11.33715,23.5 -j58959.53 -s 25544
 
-{   "swinfo":{
+{
+   "swinfo":{
       "name":"sat_skymap",
       "author":"L. Nicastro @ INAF-OAS",
       "date":"2020-04-20",
       "version":"0.2b"
-   
-},
-   "input_params":{  "tle_file":"stations.txt",
+   },
+
+   "input_params":{
+      "tle_file":"stations.txt",
+
       "location":{
          "lat":44.5280,
-         "long":11.3371,
-         "height":23.5
-      
-},
+         "lon":11.3371,
+         "alt":23.5
+      },
+
       "region":{
          "ra":51.2026,
          "dec":44.5280,
@@ -145,33 +148,35 @@ JSON shown in expanded format.
          "az":0.0000,
          "alt":90.0000,
          "parang":180.000
-      
-},
+      },
+
       "mjd":58959.53000,
       "epoch_UTC":"2020-04-20T12:43:12",
       "gmst":2.6577,
       "delta_time_s":1,
       "max_sats":1000,
       "notes":"All coordinates and radius in degrees. GMST, LMST in hrs."
-   
-},
+   },
+
    "sun":{
       "ra":28.769,
       "dec":11.785,
       "az":217.381,
       "alt":52.026,
+      "lon": -11.096,
       "parang":26.240,
       "separation_deg":37.974
-   
-},
+   },
+
    "geoloc":{
       "lat":-44.174,
       "lon":103.841,
       "alt":433.24,
       "theta":143.706
-   
-},
-   "data_fields":{  "name":[
+   },
+
+   "data_fields":{
+      "name":[
          "RA_start",
          "Dec_start",
          "RA_end",
@@ -181,8 +186,8 @@ JSON shown in expanded format.
          "PA",
          "Speed",
          "HPXID_8"
-      
 	],
+
       "desc":[
          "RA T_ini",
          "Dec T_ini",
@@ -193,8 +198,8 @@ JSON shown in expanded format.
          "position angle",
          "apparent angular rate of motion",
          "HEALPix order 8 nested schema ID"
-      
 	],
+
       "type":[
          "double",
          "double",
@@ -205,8 +210,8 @@ JSON shown in expanded format.
          "float",
          "float",
          "int"
-      
 	],
+
       "unit":[
          "deg",
          "deg",
@@ -218,9 +223,10 @@ JSON shown in expanded format.
          "arcmin/s",
          ""
 	]
-   
-},
-   "satellites":[  {  "name":"ISS (ZARYA)",
+   },
+
+   "satellites":[
+      {  "name":"ISS (ZARYA)",
          "intl_desig":"1998-067A ",
          "norad_n":25544,
          "data":[
@@ -233,11 +239,10 @@ JSON shown in expanded format.
             89,
             2.087,
             690893
-	]
-      
-}
-   
-],
+	 ]
+      }
+   ],
+
    "status":0,
    "errmsg":"",
    "n_sats_found":1,

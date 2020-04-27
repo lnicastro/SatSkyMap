@@ -4,16 +4,17 @@
 #
 # Edit to match your needs.
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 22/04/2020
+# LN @ INAF-OAS Jan. 2020.  Last change: 27/04/2020
 #--
 
 set +o noclobber
 
 #NOW=$(date +"%Y-%m-%d-%H%M")
-NOW=$(date +"%Y%m%d")
+#NOW=$(date +"%Y%m%d")
 
 # Output log file
-OUTFILE=/tmp/tle_satcount_$NOW.log
+#/tmp/tle_satcount_$NOW.log
+OUTFILE=/tmp/tle_satcount.log
 
 # Where the TLE files are stored
 if [ $# -eq 0 ]; then

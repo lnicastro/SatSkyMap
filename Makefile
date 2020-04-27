@@ -25,7 +25,7 @@ VER = v02b_`/bin/date +"%Y%m%d"`
 dist = $(LNAME)_$(VER)
 
 
-LIBOBJS = sgp.o sgp4.o sgp8.o sdp4.o sdp8.o deep.o basics.o get_el.o common.o observe.o date2mjd.o mjd2date.o skysep_h.o lst_hr.o dechalat2alt.o lpsun_radec.o earthtilt.o zenith_site_ra.o
+LIBOBJS = sgp.o sgp4.o sgp8.o sdp4.o sdp8.o deep.o basics.o get_el.o common.o observe.o date2mjd.o mjd2date.o skysep_h.o lmst_hr.o dechalat2alt.o lpsun_radec.o earthtilt.o zenith_site_ra.o
 LIBFILES = $(LIBOBJS:.o=.c)
 
 EXE = sat_skymap

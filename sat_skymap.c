@@ -15,7 +15,7 @@
     -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
     -i sat_intnlname	(TODO) Single satellite selection via its international designator (region ignored)
     -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
-    -l Lat,Lon,Height	Observation site (comma separated data with no spaces)
+    -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)
     -n MaxSats		Maximum number of satellites to return (def. 1000)
     -p RA,Dec		J2000 sky coordinates of region to check
     -r radius		Region radius centered at the given coords
@@ -39,24 +39,25 @@
     ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -d2020-01-13T12:00:00 -p90.5,-30.3 -r20
 
   Scan the TLE element file 'default.tle' for satellites visible from
-  (lat, lon, height) = (-29.25627, -70.7380, 2400),
+  (latitude, longitude, altitude) = (-29.25627, -70.7380, 2400),
   on MJD 58861.5 (UTC: 2020-01-13 12h = 2020-01-13T12:00:00),
   at (RA, Dec) = 90.5, +30.3 (deg), within a 20-deg search radius.
   Positions at given JD + deltat (def. 1) s is also computed and returned.
   Additional computed info:
     Local Mean Sidereal Time
     region Az, Alt, Parang
-    Sun RA/Dec, Alt/Az coordinates.
+    Sun RA/Dec, Alt/Az, geodetic longitude coordinates, parallactic angle
+    and distance from region center (or zenith).
 
   The output looks like this:
 
   {
   "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-02-26", "version": "0.1b"},
-  "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "long": -70.7381, "height":  2400.0],
+  "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
     "notes": "All coordinates and radius in degrees. GMST, LMST in hrs."},
-  "sun": {"ra":294.566, "dec":-21.517, "az": 101.818, "alt": 24.735, "parang":-113.376, "separation_deg":123.255},
+  "sun": {"ra":294.566, "dec":-21.517, "az": 101.818, "alt": 24.735, "lon":   2.123, "parang":-113.376, "separation_deg":123.255},
   "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
     "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
     "type": ["double", "double", "double", "double", "double", "float", "float", "float", "int"],
@@ -84,11 +85,11 @@
 
   {
   "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-20", "version": "0.2b"},
-  "input_params": {"tle_file": "stations.txt", "location": {"lat": 44.5280, "long":  11.3371, "height":    23.5},
+  "input_params": {"tle_file": "stations.txt", "location": {"lat": 44.5280, "lon":  11.3371, "alt":    23.5},
     "region": {"ra":  51.2026, "dec": 44.5280, "radius": 20.0000, "lmst":  3.4135, "az":   0.0000, "alt": 90.0000, "parang": 180.000},
     "mjd": 58959.53000, "epoch_UTC": "2020-04-20T12:43:12", "gmst":  2.6577, "delta_time_s": 1, "max_sats": 1000,
     "notes": "All coordinates and radius in degrees. GMST, LMST in hrs."},
-  "sun": {"ra": 28.769, "dec": 11.785, "az": 217.381, "alt": 52.026, "parang":  26.240, "separation_deg": 37.974},
+  "sun": {"ra": 28.769, "dec": 11.785, "az": 217.381, "alt": 52.026, "lon": -11.096, "parang":  26.240, "separation_deg": 37.974},
   "geoloc": {"lat":-44.174, "lon":103.841, "alt":   433.24, "theta": 143.706},
   "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
   "desc": ["RA T_ini", "Dec T_ini", "RA T_end", "Dec T_end", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
@@ -100,7 +101,7 @@
   }
 
 
-   LN @ INAF-OAS, Jan 2020.  Last change: 24/04/2020
+   LN @ INAF-OAS, Jan 2020.  Last change: 27/04/2020
 */
 
 #include <ctype.h>
@@ -117,45 +118,46 @@
 #include "sat_skymap_def.h"
 
   typedef struct myParams {
-	char *tle_file_name;
-	double lat;
-	double lon;
-	double ht_in_meters;
-	double ra_deg;
-	double de_deg;
-	double search_radius;
-	double az;
-	double alt;
-	double parang;
-	double gmst;
-	double lmst;
-	double mjd;
-	char date[24];
-	char intl_desig[12];
-	int delta_time;
-	int max_sats;
-	int norad_n;
-	bool haversine;
-	bool info_only;
-	bool single_sat_i;
-	bool single_sat_n;
-	bool use_deftledir;
+	char *tle_file_name,
+	     date[24],
+	     intl_desig[12];
+	double lat,
+	       lon,
+	       ht_in_meters,
+	       ra_deg,
+	       de_deg,
+	       search_radius,
+	       az,
+	       alt,
+	       parang,
+	       gmst,
+	       lmst,
+	       mjd;
+	int delta_time,
+	    max_sats,
+	    norad_n;
+	bool haversine,
+	     info_only,
+	     single_sat_i,
+	     single_sat_n,
+	     use_deftledir;
   } Params;
 
   typedef struct mySun {
-	double ra;
-	double dec;
-	double az;
-	double alt;
-	double parang;
-	double sep;
+	double ra,
+	       dec,
+	       az,
+	       alt,
+	       parang,
+	       lon,
+	       sep;
   } Sun;
 
   typedef struct myGeoloc {
-	double lon;
-	double lat;
-	double alt;
-	double theta;
+	double lon,
+	       lat,
+	       alt,
+	       theta;
   } Geoloc;
 
 /*
@@ -178,7 +180,7 @@ void Usage() {
   "  -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])\n"
   "  -i sat_intnlname	Single satellite selection via its international designator (region ignored)\n"
   "  -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)\n"
-  "  -l lat,lon,height	Observation site (comma separated data with no spaces)\n"
+  "  -l lat,lon,alt	Geodetic observing site (comma separated data with no spaces)\n"
   "  -n MaxSats		Maximum number of satellites to return (def. 1000)\n"
   "  -p Ra,Dec		J2000 sky coordinates of region to check\n"
   "  -r radius		Region radius centered at the given coords\n"
@@ -207,7 +209,7 @@ void open_json() {
 
 void add_params_json(Params p) {
   printf("\"input_params\": {"
-    "\"tle_file\": \"%s\", \"location\": {\"lat\":%8.4lf, \"long\":%9.4lf, \"height\":%8.1lf}, \"region\": {\"ra\":%9.4lf, \"dec\":%8.4lf, \"radius\":%8.4lf, \"lmst\":%8.4lf, \"az\":%9.4lf, \"alt\":%8.4lf, \"parang\":%8.3lf}, "
+    "\"tle_file\": \"%s\", \"location\": {\"lat\":%8.4lf, \"lon\":%9.4lf, \"alt\":%8.1lf}, \"region\": {\"ra\":%9.4lf, \"dec\":%8.4lf, \"radius\":%8.4lf, \"lmst\":%8.4lf, \"az\":%9.4lf, \"alt\":%8.4lf, \"parang\":%8.3lf}, "
     "\"mjd\": %11.5lf, \"epoch_UTC\": \"%s\", \"gmst\":%8.4lf, \"delta_time_s\": %d, \"max_sats\": %d, "
     "\"notes\": \"All coordinates and radius in degrees. GMST, LMST in hrs.\"}, ",
     p.tle_file_name, p.lat, p.lon, p.ht_in_meters, p.ra_deg, p.de_deg, p.search_radius, p.lmst, p.az, p.alt, p.parang, p.mjd, p.date, p.gmst, p.delta_time, p.max_sats);
@@ -215,8 +217,8 @@ void add_params_json(Params p) {
 
 void add_sundata_json(Sun sun) {
   printf("\"sun\": {"
-    "\"ra\":%7.3lf, \"dec\":%7.3lf, \"az\":%8.3lf, \"alt\":%7.3lf, \"parang\":%8.3lf, \"separation_deg\":%7.3lf}, ",
-    sun.ra, sun.dec, sun.az, sun.alt, sun.parang, sun.sep);
+    "\"ra\":%7.3lf, \"dec\":%7.3lf, \"az\":%8.3lf, \"alt\":%7.3lf, \"lon\":%8.3lf, \"parang\":%8.3lf, \"separation_deg\":%7.3lf}, ",
+    sun.ra, sun.dec, sun.az, sun.alt, sun.lon, sun.parang, sun.sep);
 }
 
 void add_fieldsdesc_json() {
@@ -512,10 +514,16 @@ int main(int argc, char **argv)
   sun.ra *= RAD2DEG;
   sun.dec *= RAD2DEG;
 
+  sun.lon = p.gmst * 15. - sun.ra;
+  if ( sun.lon > 180. )
+	sun.lon = 360. - sun.lon;
+  else
+	sun.lon *= -1;
+
 #ifdef DEBUG
 printf("JD %lf \n", jd);
 printf("Region HA, LMST, AZ, Alt, PA: %lf %lf %lf %lf %lf (h, deg, deg, deg)\n", hareg, lmst, p.az, p.alt, p.parang);
-printf("Sun RA, Dec, sep: %lf %lf  %lf (deg)\n", sun.ra, sun.dec, sun.sep);
+printf("Sun RA, Dec, sep: %lf %lf  %lf  %lf (deg)\n", sun.ra, sun.dec, sun.lon, sun.sep);
 printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.az, sun.alt, sun.parang);
 #endif
 
