@@ -25,6 +25,7 @@
 
   Switches:
     -h			print this help
+    -G			Compute (and return) geodetic location for each satellite
     -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)
     -I			Information about the returned data and number of satellites found
   			('satellites' object not returned)
@@ -52,7 +53,7 @@
   The output looks like this:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-02-26", "version": "0.1b"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-28", "version": "0.2c"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -84,24 +85,24 @@
   Output:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-20", "version": "0.2b"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-28", "version": "0.2c"},
   "input_params": {"tle_file": "stations.txt", "location": {"lat": 44.5280, "lon":  11.3371, "alt":    23.5},
     "region": {"ra":  51.2026, "dec": 44.5280, "radius": 20.0000, "lmst":  3.4135, "az":   0.0000, "alt": 90.0000, "parang": 180.000},
     "mjd": 58959.53000, "epoch_UTC": "2020-04-20T12:43:12", "gmst":  2.6577, "delta_time_s": 1, "max_sats": 1000,
     "notes": "All coordinates and radius in degrees. GMST, LMST in hrs."},
   "sun": {"ra": 28.769, "dec": 11.785, "az": 217.381, "alt": 52.026, "lon": -11.096, "parang":  26.240, "separation_deg": 37.974},
-  "geoloc": {"lat":-44.174, "lon":103.841, "alt":   433.24, "theta": 143.706},
   "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
   "desc": ["RA T_ini", "Dec T_ini", "RA T_end", "Dec T_end", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
   "type": ["double", "double", "double", "double", "double", "float", "float", "float", "int"],
   "unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", ""]},
   "satellites": [{"name": "ISS (ZARYA)", "intl_desig": "1998-067A ", "norad_n": 25544,
+    "geoloc": {"lat":-44.174, "lon":103.841, "alt":   433.24, "theta": 143.706},
     "data": [185.2172,-53.2256,185.2753,-53.2252, 11436.45,149.1219, 89, 2.087,690893]}],
   "status": 0, "errmsg": "", "n_sats_found": 1, "n_sats": 1
   }
 
 
-   LN @ INAF-OAS, Jan 2020.  Last change: 27/04/2020
+   LN @ INAF-OAS, Jan 2020.  Last change: 28/04/2020
 */
 
 #include <ctype.h>
@@ -118,46 +119,47 @@
 #include "sat_skymap_def.h"
 
   typedef struct myParams {
-	char *tle_file_name,
-	     date[24],
-	     intl_desig[12];
-	double lat,
-	       lon,
-	       ht_in_meters,
-	       ra_deg,
-	       de_deg,
-	       search_radius,
-	       az,
-	       alt,
-	       parang,
-	       gmst,
-	       lmst,
-	       mjd;
-	int delta_time,
-	    max_sats,
-	    norad_n;
-	bool haversine,
-	     info_only,
-	     single_sat_i,
-	     single_sat_n,
-	     use_deftledir;
+	  char *tle_file_name,
+		date[24],
+		intl_desig[12];
+	 double lat,
+		lon,
+		ht_in_meters,
+		ra_deg,
+		de_deg,
+		search_radius,
+		az,
+		alt,
+		parang,
+		gmst,
+		lmst,
+		mjd;
+	    int delta_time,
+		max_sats,
+		norad_n;
+	   bool haversine,
+		info_only,
+		single_sat_i,
+		single_sat_n,
+		geoloc_requested,
+		use_deftledir;
   } Params;
 
   typedef struct mySun {
 	double ra,
-	       dec,
-	       az,
-	       alt,
-	       parang,
-	       lon,
-	       sep;
+		dec,
+		az,
+		alt,
+		parang,
+		lon,
+		sep;
   } Sun;
 
   typedef struct myGeoloc {
-	double lon,
-	       lat,
-	       alt,
-	       theta;
+	 double lon,
+		lat,
+		alt,
+		theta;
   } Geoloc;
 
 /*
@@ -189,6 +191,7 @@ void Usage() {
   "  -D DirTLEs		Directory with the repository of TLE files (def ./; ignore -T option)\n\n"
   "\nSwitches:\n"
   "  -h			print this help\n"
+  "  -G			Compute (and return) geodetic location for each satellite\n"
   "  -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)\n"
   "  -I			Information about the returned data and number of satellites found\n"
   " 			('satellites' object not returned)\n\n"
@@ -230,7 +233,7 @@ void add_fieldsdesc_json() {
 }
 
 void add_satlatlon_json(Geoloc geo) {
-  printf( "\"geoloc\": {\"lat\":%7.3lf, \"lon\":%7.3lf, \"alt\":%9.2lf, \"theta\":%8.3lf}, ", geo.lat, geo.lon, geo.alt, geo.theta);
+    printf( "\"geoloc\": {\"lat\":%7.3lf, \"lon\":%7.3lf, \"alt\":%9.2lf, \"theta\":%8.3lf}, ", geo.lat, geo.lon, geo.alt, geo.theta);
 }
 
 void close_stat_json(int status, char *errmsg, int n_sats_found, int n_sats) {
@@ -331,6 +334,7 @@ int main(int argc, char **argv)
   p.info_only = false;    /* If just return info about json data and number of satellites in the requested region */
   p.single_sat_i = false; /* If enquire for just 1 satellite using its international designator */
   p.single_sat_n = false; /* If enquire for just 1 satellite using its NORAD number */
+  p.geoloc_requested = false;  /* If geodetic location requested for each satellite */ 
   p.intl_desig[0] = '\0';
   p.norad_n = 0;
   p.use_deftledir = false; /* If default directory with TLE files should be used (def. ./) */
@@ -353,6 +357,10 @@ int main(int argc, char **argv)
  	  case 'h':
 		Usage();
 		exit(0);
+ 	  case 'G':
+		p.geoloc_requested = true;
+		i--;
+		break;
  	  case 'H':
 		p.haversine = true;
 		i--;
@@ -470,7 +478,7 @@ int main(int argc, char **argv)
   int use_bufflen = 0, cur_bufflen = max_satbuff;
   double hareg, hasun;
   char *sbuff, *tle_file_name;
-  bool single_sat_found = false, read_tle_list = true;
+  bool single_sat = false, single_sat_found = false, read_tle_list = true;
 
   if ( (sbuff = (char *)malloc(max_satbuff)) == NULL ) {
 	sprintf(errmsg, "Could not allocate required buffer memory");
@@ -482,12 +490,17 @@ int main(int argc, char **argv)
 
   p.tle_file_name = argv[iarg];
 
+  if ( p.single_sat_n || p.single_sat_i ) {
+	single_sat = true;
+	p.geoloc_requested = true;
+  }
+
 /* Local Mean Sidereal Time & GMST */
   //double gmst;
   p.lmst = lmst_hr(jd, p.lon, &p.gmst);
 
 /* For single satellite, use zenith coords if not given */
-  if ( (p.single_sat_n || p.single_sat_i) && !in_region ) {
+  if ( single_sat && !in_region ) {
 	p.ra_deg = p.lmst * 15.;  
 	p.de_deg = p.lat;
 	hareg = 0.;
@@ -514,7 +527,7 @@ int main(int argc, char **argv)
   sun.ra *= RAD2DEG;
   sun.dec *= RAD2DEG;
 
-  sun.lon = p.gmst * 15. - sun.ra;
+  sun.lon = fmod(p.gmst * 15. + 360. - sun.ra, 360.);  /* in 0 - 360 deg */
   if ( sun.lon > 180. )
 	sun.lon = 360. - sun.lon;
   else
@@ -529,6 +542,8 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 
   add_sundata_json(sun);
 
+/* Geodetic position */
+  Geoloc geo;
 
 /* Loop on list of tle files or simple open of single input file */
   while ( read_tle_list ) {
@@ -576,7 +591,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 
       tle_t tle;  /* Structure for two-line elements set for satellite */
 
-      if ( !parse_elements(line1, line2, &tle) )    /* got a TLE */
+      if ( !parse_elements(line1, line2, &tle) )  /* TLE found */
       {
 /* First check if we have processed this sat already */
 	 strncpy(norad_name, line1+2, 5);  /* this is tle.norad_number */
@@ -607,10 +622,10 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 			single_sat_found = true;
 	    }
  
-// Single satellite requested?
-	 if ( (p.single_sat_i || p.single_sat_n) && !single_sat_found )
+/* Single satellite requested? */
+	 if ( single_sat && !single_sat_found )
 		continue;
-// Add a , to make it unique, and skip any previously met satellite
+/* Add a , to make it unique, and skip any previously met satellite */
 	 strcat(norad_name, ",");
 	 if ( (s = strstr(sbuff, norad_name)) != NULL ) {
 //printf("Found string '%s' at index = %ld ... skipping.\n", norad_name, s - sbuff);
@@ -648,17 +663,14 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	get_satellite_ra_dec_delta(observer_loc, pos, &ra, &dec, &sep_to_satellite);
 /* For malformed or partial tle (e.g. Bepi-Colombo) this could happen */
 	if ( isnan(ra) || isnan(dec) ) {
-		sprintf(errmsg, "Could not decode properly TLE data");
+		sprintf(errmsg, "Could not decode TLE data");
 		close_stat_json(2, errmsg, n_sats_found, n_sats);
 		exit(1);
 	}
 
-/* For single satellite also report its geo Lat, Lon, Alt, theta */
-	if ( p.single_sat_i || p.single_sat_n ) {
-		Geoloc geo;
+/* For single satellite also report its geo Lat, Lon, Alt, theta... but computed also whe user requested (and added below) */
+	if ( p.geoloc_requested )
 		sat_geoLocation(p.gmst, pos,  &geo);
-		add_satlatlon_json(geo);
-	}
 
 	epoch_of_date_to_j2000(jd, &ra, &dec);  /* Approx precession. Returned RA, Dec in radians. */
 
@@ -694,7 +706,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	}
 
 /* Check for single sat. or if in search area for both start and end epoch */
-	if ( p.single_sat_i || p.single_sat_n ||  /* for single satellite ignore region */
+	if ( single_sat ||  /* for single satellite ignore region */
 	     ang_sep < p.search_radius || ang_sep1 < p.search_radius )  /* good enough */
 	{
             line1[16] = '\0';
@@ -738,8 +750,14 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 		  printf(" \"satellites\": [");
 		}
 
-		printf( "{\"name\": \"%s\", \"intl_desig\": \"%s\", \"norad_n\": %d, \"data\": [%8.4lf,%8.4lf,%8.4lf,%8.4lf,%9.2lf,%6.4lf,%3d,%6.3lf,%ld]}",
-			sat_name, intl_desig, tle.norad_number, ra * RAD2DEG, dec * RAD2DEG, ra1 * RAD2DEG, dec1 * RAD2DEG,
+		printf("{\"name\": \"%s\", \"intl_desig\": \"%s\", \"norad_n\": %d, ",
+			sat_name, intl_desig, tle.norad_number);
+
+		if ( p.geoloc_requested )
+			add_satlatlon_json(geo);
+
+		printf("\"data\": [%8.4lf,%8.4lf,%8.4lf,%8.4lf,%9.2lf,%6.4lf,%3d,%6.3lf,%ld]}",
+			ra * RAD2DEG, dec * RAD2DEG, ra1 * RAD2DEG, dec1 * RAD2DEG,
 			sep_to_satellite, ang_sep,
 			(int)(posn_ang_of_motion * RAD2DEG), speed, id8nest);
 /* Speed is displayed in arcminutes/second (== degrees/minute) */
@@ -751,7 +769,8 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 		goto end_checking;
 	    }
           }  // end if ang_sep < p.search_radius
-        }  // end got a TLE
+        }  // end TLE found
+
         strcpy(line1, line2);
 	if ( line2[0] != '1' && line2[0] != '2' ) {
 	  strncpy(sat_name, line2, 23);
@@ -775,8 +794,8 @@ end_checking:
 	printf("],");
 
 /* For single satellite request report failure but do not rise an error flag */
-  if ( (p.single_sat_n || p.single_sat_i) && !single_sat_found )
-	 sprintf(errmsg, "Requested satellite not found in TLE file");
+  if ( single_sat && !single_sat_found )
+	sprintf(errmsg, "Requested satellite not found in TLE file");
 
   close_stat_json(status, errmsg, n_sats_found, n_sats);
 

@@ -50,6 +50,7 @@ OPTIONS are:
 
 Switches:
   -h			print this help
+  -G			Compute (and return) geodetic location for each satellite
   -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)
   -I			Information about the returned data and number of satellites found
  			('satellites' object not returned)
@@ -90,7 +91,7 @@ Additional computed info:
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -d2020-01-13T12:00:00 -p90.5,-30.3 -r20
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-20", "version": "0.2b"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-28", "version": "0.2c"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -124,129 +125,66 @@ JSON shown in expanded format.
 ./sat_skymap stations.txt -H -l44.52804,11.33715,23.5 -j58959.53 -s 25544
 
 {
-   "swinfo":{
-      "name":"sat_skymap",
-      "author":"L. Nicastro @ INAF-OAS",
-      "date":"2020-04-20",
-      "version":"0.2b"
-   },
-
-   "input_params":{
-      "tle_file":"stations.txt",
-
-      "location":{
-         "lat":44.5280,
-         "lon":11.3371,
-         "alt":23.5
-      },
-
-      "region":{
-         "ra":51.2026,
-         "dec":44.5280,
-         "radius":20.0000,
-         "lmst":3.4135,
-         "az":0.0000,
-         "alt":90.0000,
-         "parang":180.000
-      },
-
-      "mjd":58959.53000,
-      "epoch_UTC":"2020-04-20T12:43:12",
-      "gmst":2.6577,
-      "delta_time_s":1,
-      "max_sats":1000,
-      "notes":"All coordinates and radius in degrees. GMST, LMST in hrs."
-   },
-
-   "sun":{
-      "ra":28.769,
-      "dec":11.785,
-      "az":217.381,
-      "alt":52.026,
-      "lon": -11.096,
-      "parang":26.240,
-      "separation_deg":37.974
-   },
-
-   "geoloc":{
-      "lat":-44.174,
-      "lon":103.841,
-      "alt":433.24,
-      "theta":143.706
-   },
-
-   "data_fields":{
-      "name":[
-         "RA_start",
-         "Dec_start",
-         "RA_end",
-         "Dec_end",
-         "Distance",
-         "Separation",
-         "PA",
-         "Speed",
-         "HPXID_8"
-	],
-
-      "desc":[
-         "RA T_ini",
-         "Dec T_ini",
-         "RA T_end",
-         "Dec T_end",
-         "distance to sat.",
-         "angular separation",
-         "position angle",
-         "apparent angular rate of motion",
-         "HEALPix order 8 nested schema ID"
-	],
-
-      "type":[
-         "double",
-         "double",
-         "double",
-         "double",
-         "double",
-         "float",
-         "float",
-         "float",
-         "int"
-	],
-
-      "unit":[
-         "deg",
-         "deg",
-         "deg",
-         "deg",
-         "km",
-         "deg",
-         "deg",
-         "arcmin/s",
-         ""
-	]
-   },
-
-   "satellites":[
-      {  "name":"ISS (ZARYA)",
-         "intl_desig":"1998-067A ",
-         "norad_n":25544,
-         "data":[
-            185.2172,
-            -53.2256,
-            185.2753,
-            -53.2252,
-            11436.45,
-            149.1219,
-            89,
-            2.087,
-            690893
-	 ]
-      }
-   ],
-
-   "status":0,
-   "errmsg":"",
-   "n_sats_found":1,
-   "n_sats":1
+	"swinfo": {
+		"name": "sat_skymap",
+		"author": "L. Nicastro @ INAF-OAS",
+		"date": "2020-04-28",
+		"version": "0.2c"
+	},
+	"input_params": {
+		"tle_file": "stations.txt",
+		"location": {
+			"lat": 44.5280,
+			"lon": 11.3371,
+			"alt": 23.5
+		},
+		"region": {
+			"ra": 51.2026,
+			"dec": 44.5280,
+			"radius": 20.0000,
+			"lmst": 3.4135,
+			"az": 0.0000,
+			"alt": 90.0000,
+			"parang": 180.000
+		},
+		"mjd": 58959.53000,
+		"epoch_UTC": "2020-04-20T12:43:12",
+		"gmst": 2.6577,
+		"delta_time_s": 1,
+		"max_sats": 1000,
+		"notes": "All coordinates and radius in degrees. GMST, LMST in hrs."
+	},
+	"sun": {
+		"ra": 28.769,
+		"dec": 11.785,
+		"az": 217.381,
+		"alt": 52.026,
+		"lon": -11.096,
+		"parang": 26.240,
+		"separation_deg": 37.974
+	},
+	"geoloc": {
+		"lat": -44.174,
+		"lon": 103.841,
+		"alt": 433.24,
+		"theta": 143.706
+	},
+	"data_fields": {
+		"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
+		"desc": ["RA T_ini", "Dec T_ini", "RA T_end", "Dec T_end", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
+		"type": ["double", "double", "double", "double", "double", "float", "float", "float", "int"],
+		"unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", ""]
+	},
+	"satellites": [{
+		"name": "ISS (ZARYA)",
+		"intl_desig": "1998-067A ",
+		"norad_n": 25544,
+		"data": [185.2172, -53.2256, 185.2753, -53.2252, 11436.45, 149.1219, 89, 2.087, 690893]
+	}],
+	"status": 0,
+	"errmsg": "",
+	"n_sats_found": 1,
+	"n_sats": 1
 }
 ```
 
