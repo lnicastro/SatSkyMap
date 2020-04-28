@@ -163,12 +163,6 @@ JSON shown in expanded format.
 		"parang": 26.240,
 		"separation_deg": 37.974
 	},
-	"geoloc": {
-		"lat": -44.174,
-		"lon": 103.841,
-		"alt": 433.24,
-		"theta": 143.706
-	},
 	"data_fields": {
 		"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
 		"desc": ["RA T_ini", "Dec T_ini", "RA T_end", "Dec T_end", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
@@ -179,6 +173,12 @@ JSON shown in expanded format.
 		"name": "ISS (ZARYA)",
 		"intl_desig": "1998-067A ",
 		"norad_n": 25544,
+		"geoloc": {
+			"lat": -44.174,
+			"lon": 103.841,
+			"alt": 433.24,
+			"theta": 143.706
+		},
 		"data": [185.2172, -53.2256, 185.2753, -53.2252, 11436.45, 149.1219, 89, 2.087, 690893]
 	}],
 	"status": 0,
