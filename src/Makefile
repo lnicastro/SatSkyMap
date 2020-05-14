@@ -6,7 +6,7 @@ L = lib$(LNAME).a
 LIBSO = lib$(LNAME).so
 
 # HEALPix C lib
-HPXDIR = ./HealpixC
+HPXDIR = ../HealpixC
 HPXLIB = -L$(HPXDIR) -lchealpix
 HPXINC = -I$(HPXDIR)
 
