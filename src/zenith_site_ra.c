@@ -130,7 +130,29 @@ int zenith_site_ra_last(double ut1, double lon, double *radeg)
 
 
 //
+// From Spherical deg. (e.g. RA, Dec) to unit vector
+//
 // Unused
+
+void sph2v ( const double ra, const double dec, double v[3] )
+{
+  const double rarad = ra*DEG2RAD, decrad = dec*DEG2RAD;
+
+  double cosd = cos(decrad);
+
+  v[0] = cos(rarad) * cosd;
+  v[1] = sin(rarad) * cosd;
+  v[2] = sin(decrad);
+
+}
+
+
+
+//
+// SLAlib: From site AZ, Elev, Lat => HA, Dec
+//
+// Unused
+
 void slaDh2e ( double az, double el, double phi, double *ha, double *dec )
 {
   double sa, ca, se, ce, sp, cp, x, y, z, r;

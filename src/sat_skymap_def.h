@@ -1,13 +1,16 @@
 /*
    Definitions for sat_skymap
   
-   LN @ INAF-OAS, Feb 2020                      Last change: 28/04/2020
+   LN @ INAF-OAS, Feb 2020                      Last change: 12/10/2020
 */
 
 #ifndef SAT_SKYMAP_DEF_H
 #define SAT_SKYMAP_DEF_H
 
-const char *progname = "sat_skymap", *progauthor = "L. Nicastro @ INAF-OAS", *progdate = "2020-04-28", *progversion = "0.2c";
+const char *progname = "sat_skymap",
+	*progauthor = "L. Nicastro @ INAF-OAS",
+       	*progdate = "2020-10-10",
+       	*progversion = "0.2d";
 
 /* Default TLE files repository */
 #define DEF_TLEDIR "/usr/local/TLErepo"

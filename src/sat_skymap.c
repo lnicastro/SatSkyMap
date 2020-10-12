@@ -25,6 +25,7 @@
 
   Switches:
     -h			print this help
+    -E			Use input geodetic location as reference location for region (-G by def., -p ignored)
     -G			Compute (and return) geodetic location for each satellite
     -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)
     -I			Information about the returned data and number of satellites found
@@ -53,7 +54,7 @@
   The output looks like this:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-28", "version": "0.2c"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-10-10", "version": "0.2d"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -85,7 +86,8 @@
   Output:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-28", "version": "0.2c"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-10-10", "version": "0.2d"},
+  "geoloc_fields": {"lat": {"desc": "Geodetic Latitude", "unit": "deg"}, "lon": {"desc": "Geodetic Longitude", "unit": "deg"}, "alt": {"desc": "Geodetic Altitude", "unit": "km"}, "theta": {"desc": "Equatorial angle (Lon + GMST = RA)", "unit": "deg"}},
   "input_params": {"tle_file": "stations.txt", "location": {"lat": 44.5280, "lon":  11.3371, "alt":    23.5},
     "region": {"ra":  51.2026, "dec": 44.5280, "radius": 20.0000, "lmst":  3.4135, "az":   0.0000, "alt": 90.0000, "parang": 180.000},
     "mjd": 58959.53000, "epoch_UTC": "2020-04-20T12:43:12", "gmst":  2.6577, "delta_time_s": 1, "max_sats": 1000,
@@ -102,7 +104,7 @@
   }
 
 
-   LN @ INAF-OAS, Jan 2020.  Last change: 28/04/2020
+   LN @ INAF-OAS, Jan 2020.  Last change: 12/10/2020
 */
 
 #include <ctype.h>
@@ -142,6 +144,7 @@
 		single_sat_i,
 		single_sat_n,
 		geoloc_requested,
+		geoloc_reference,
 		use_deftledir;
   } Params;
 
@@ -191,8 +194,9 @@ void Usage() {
   "  -D DirTLEs		Directory with the repository of TLE files (def ./; ignore -T option)\n\n"
   "\nSwitches:\n"
   "  -h			print this help\n"
+  "  -E			Use input geodetic location as reference location for region (-G by def., -p ignored) \n"
   "  -G			Compute (and return) geodetic location for each satellite\n"
-  "  -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)\n"
+  "  -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested!)\n"
   "  -I			Information about the returned data and number of satellites found\n"
   " 			('satellites' object not returned)\n\n"
   "  -T			Use default repository directory for TLE files (see sat_skymap_def.h; def. ./)\n"
@@ -232,6 +236,17 @@ void add_fieldsdesc_json() {
     "\"unit\": [\"deg\", \"deg\", \"deg\", \"deg\", \"km\", \"deg\", \"deg\", \"arcmin/s\", \"\"]},");
 }
 
+void add_geofieldsdesc_json() {
+  printf(
+    "\"geoloc_fields\": {"
+	"\"lat\": {\"desc\": \"Geodetic Latitude\", \"unit\": \"deg\"}, "
+	"\"lon\": {\"desc\": \"Geodetic Longitude\", \"unit\": \"deg\"}, "
+	"\"alt\": {\"desc\": \"Geodetic Altitude\", \"unit\": \"km\"}, "
+	"\"theta\": {\"desc\": \"Equatorial angle (Lon + GMST = RA)\", \"unit\": \"deg\"}"
+    "}, ");
+}
+
+
 void add_satlatlon_json(Geoloc geo) {
     printf( "\"geoloc\": {\"lat\":%7.3lf, \"lon\":%7.3lf, \"alt\":%9.2lf, \"theta\":%8.3lf}, ", geo.lat, geo.lon, geo.alt, geo.theta);
 }
@@ -269,25 +284,23 @@ void sat_geoLocation(double gmst, double *pos,  Geoloc *geo) {
   double r, e2, phi, sinphi, c;
   const double ERAD = 6.3781366e3;        /* IERS Conventions (2003) Earth radius km */
   const double F = 3.352819697896193e-3;  /* IERS Conventions (2003) Earth ellipsoid flattening factor */
+				 	  /* Note: in "predict" it is 3.35281066474748E-3 */ 
 
   geo->theta = atan2(pos[1], pos[0]) * RAD2DEG;  /* degrees */
-  //lon = (theta - gmst) % TWOPI;
   geo->lon = (geo->theta - gmst * 15.);
-//if (geo->lon > 360.)
   if (geo->lon > 180)
 	geo->lon -= 360.;
-//else if (geo->lon < 360.)
   else if (geo->lon < -180.)
 	geo->lon += 360.;
 
-  r = sqrt(pos[0]*pos[0] + pos[1]*pos[1]);
+  r = sqrt(pos[0] * pos[0] + pos[1] * pos[1]);
   e2 = F * (2. - F);
   geo->lat = atan2(pos[2], r);
 
   do {
 	phi = geo->lat;
 	sinphi = sin(phi);
-	c = 1. / sqrt(1. - e2 * sinphi*sinphi);
+	c = 1. / sqrt(1. - e2 * sinphi * sinphi);
 	geo->lat = atan2(pos[2] + ERAD * c * e2 * sinphi, r);
   } while (fabs(geo->lat - phi) >= 1e-10);
 
@@ -295,17 +308,17 @@ void sat_geoLocation(double gmst, double *pos,  Geoloc *geo) {
 
   geo->lat *= RAD2DEG;  /* degrees */
    if (geo->lat > 90.)
-	geo->lat -= 360.;
+	geo->lat -= 360.;  /* could keep in -90, 90 range, but then need to manage geo->lon accordingly */
 }
 
 
 int main(int argc, char **argv)
 {
-  char tle_path[128] = {"."}, errmsg[128] = {""}, line1[100], line2[100], sat_name[25], tle_path_file[200],
-	opt, *endptr;
-  double jd, target_ra, target_dec, rho_sin_phi, rho_cos_phi, observer_loc[3], observer_loc2[3];
-  int i, par_pos;
-  int status = 0, n_sats_found = 0, n_sats = 0;
+  char errmsg[128] = {""}, tle_path[128] = {"."}, line1[100], line2[100],
+	sat_name[25], tle_path_file[200], opt, *endptr;
+  double jd, rho_sin_phi, rho_cos_phi, observer_loc[3], observer_loc2[3],
+	 target_ra, target_dec, target_lon = 0, target_lat = 0;
+  int i, par_pos, status = 0, n_sats_found = 0, n_sats = 0;
   bool in_region = false;  /* used for single satellite request */
 
 
@@ -335,9 +348,11 @@ int main(int argc, char **argv)
   p.single_sat_i = false; /* If enquire for just 1 satellite using its international designator */
   p.single_sat_n = false; /* If enquire for just 1 satellite using its NORAD number */
   p.geoloc_requested = false;  /* If geodetic location requested for each satellite */ 
+  p.geoloc_reference = false;  /* If region selection must refer to geodetic location
+				rather than RA, Dec. If true, p.geoloc_requested is also set to true. */ 
+  p.use_deftledir = false;  /* If default directory with TLE files should be used (def. ./) */
   p.intl_desig[0] = '\0';
   p.norad_n = 0;
-  p.use_deftledir = false; /* If default directory with TLE files should be used (def. ./) */
 
 
 /* Note: no check on validity of input parameters! Could also use getarg. */
@@ -347,7 +362,7 @@ int main(int argc, char **argv)
 		opt = argv[i][1];
 		par_pos = 2;
 		if ( argv[i][2] == 0 ) {  /* blank after option */
-			//if ( argv[i+1][0] != '-' )  /* No, because of possible negative numbers after the param */
+//if ( argv[i+1][0] != '-' )  /* No, because of possible negative numbers after the param */
 		  ++i;
 		  par_pos = 0;
 		}
@@ -357,6 +372,11 @@ int main(int argc, char **argv)
  	  case 'h':
 		Usage();
 		exit(0);
+ 	  case 'E':
+		p.geoloc_reference = true;
+		p.geoloc_requested = true;
+		i--;
+		break;
  	  case 'G':
 		p.geoloc_requested = true;
 		i--;
@@ -499,16 +519,21 @@ int main(int argc, char **argv)
   //double gmst;
   p.lmst = lmst_hr(jd, p.lon, &p.gmst);
 
-/* For single satellite, use zenith coords if not given */
-  if ( single_sat && !in_region ) {
+/* For input geoloc or single satellite, use zenith coords if not given */
+  if ( p.geoloc_reference || (single_sat && !in_region) ) {
 	p.ra_deg = p.lmst * 15.;  
 	p.de_deg = p.lat;
+	target_ra = p.lmst / RAD2HRS;
+	target_dec = p.lat * DEG2RAD;
+	target_lon = p.lon * DEG2RAD;
+  	target_lat = p.lat * DEG2RAD;
 	hareg = 0.;
-  } else
+	add_geofieldsdesc_json();
+  } else {
+	target_ra = p.ra_deg * DEG2RAD;
+	target_dec = p.de_deg * DEG2RAD;
 	hareg = p.lmst - p.ra_deg / 15.;
-
-  target_ra = p.ra_deg * DEG2RAD;
-  target_dec = p.de_deg * DEG2RAD;
+  }
 
 /* Alt, Az, Parang from Dec, HA, Lat */
   dechalat2alt(target_dec, hareg, p.lat, &p.alt, &p.az, &p.parang);
@@ -519,16 +544,23 @@ int main(int argc, char **argv)
   Sun sun;
 
   lpsun_radec(jd, &sun.ra, &sun.dec);
-  sun.sep = skysep_h(target_ra, target_dec, sun.ra, sun.dec);
+
+  sun.lon = fmod(p.gmst * 15. + 360. - sun.ra * RAD2DEG, 360.);  /* Lon in [0, 360[ deg */
  
   hasun = p.lmst - sun.ra * RAD2HRS;
   dechalat2alt(sun.dec, hasun, p.lat, &sun.alt, &sun.az, &sun.parang);
 
+  if ( p.geoloc_reference )
+    sun.sep = skysep_h(target_lon, target_lat, sun.lon*DEG2RAD, sun.dec);
+  else
+    sun.sep = skysep_h(target_ra, target_dec, sun.ra, sun.dec);
+
+
+
   sun.ra *= RAD2DEG;
   sun.dec *= RAD2DEG;
 
-  sun.lon = fmod(p.gmst * 15. + 360. - sun.ra, 360.);  /* in 0 - 360 deg */
-  if ( sun.lon > 180. )
+  if ( sun.lon > 180. )  /* Lon in [-180, +180] deg */
 	sun.lon = 360. - sun.lon;
   else
 	sun.lon *= -1;
@@ -668,7 +700,9 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 		exit(1);
 	}
 
-/* For single satellite also report its geo Lat, Lon, Alt, theta... but computed also whe user requested (and added below) */
+/* For single satellite also report its geo Lat, Lon, Alt, theta...
+   but also computed when explicitly requested by the user (and added below)
+*/
 	if ( p.geoloc_requested )
 		sat_geoLocation(p.gmst, pos,  &geo);
 
@@ -677,32 +711,55 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 /* Compute position delta_time seconds later to
    1. check if object enters the requested region,
    2. compute speed/PA of motion (and then motion direction)
+
+  Note: for geolocation only compute the reference position, not that at the second epoch
 */
 	t_since += p.delta_time * 1440. / SEC_IN_DAY;
 
 	if ( is_deep )
-             SDP4(t_since, &tle, sat_params, pos, NULL);
+		SDP4(t_since, &tle, sat_params, pos, NULL);
 	else
-             SGP4(t_since, &tle, sat_params, pos, NULL);
+		SGP4(t_since, &tle, sat_params, pos, NULL);
 
 	get_satellite_ra_dec_delta(observer_loc2, pos, &ra1, &dec1, &unused_delta2);
 	epoch_of_date_to_j2000(jd, &ra1, &dec1);
 
 /* Approx or precise separation? */
 	if ( !p.haversine ) {
-           d_ra = (ra - target_ra + TWOPI);
-           if ( d_ra > PI )
-             d_ra -= TWOPI;
-           d_dec = dec - target_dec;
-           ang_sep = sqrt(d_ra * d_ra + d_dec * d_dec) * RAD2DEG;
-           d_ra = (ra1 - target_ra + TWOPI);
-           if ( d_ra > PI )
-             d_ra -= TWOPI;
-           d_dec = dec1 - target_dec;
-           ang_sep1 = sqrt(d_ra * d_ra + d_dec * d_dec) * RAD2DEG;
+	  if ( p.geoloc_reference ) {
+		d_ra = geo.lon * DEG2RAD - target_lon + TWOPI;
+		if ( d_ra > PI )
+		  d_ra -= TWOPI;
+		d_dec = geo.lat - target_lat;
+		ang_sep = sqrt(d_ra * d_ra + d_dec * d_dec) * RAD2DEG;
+		ang_sep1 = 2 * ang_sep;  // dummy
+	  } else {
+		d_ra = (ra - target_ra + TWOPI);
+		if ( d_ra > PI )
+		  d_ra -= TWOPI;
+		d_dec = dec - target_dec;
+		ang_sep = sqrt(d_ra * d_ra + d_dec * d_dec) * RAD2DEG;
+		d_ra = (ra1 - target_ra + TWOPI);
+		if ( d_ra > PI )
+		  d_ra -= TWOPI;
+		d_dec = dec1 - target_dec;
+		ang_sep1 = sqrt(d_ra * d_ra + d_dec * d_dec) * RAD2DEG;
+	  }
 	} else {
-	   ang_sep = skysep_h(target_ra, target_dec, ra, dec);
-	   ang_sep1 = skysep_h(target_ra, target_dec, ra1, dec1);
+	  if ( p.geoloc_reference ) {
+		d_ra = geo.lon; // , g_lat = geo.lat * DEG2RAD;
+		if ( d_ra < 0 )
+		  d_ra += 360;
+		d_ra *= DEG2RAD;
+		ang_sep = skysep_h(target_lon, target_lat, d_ra, geo.lat * DEG2RAD);
+		ang_sep1 = 2 * ang_sep;  // dummy
+//printf("\ng_lon, g_lat, ang_sep: %lf %lf %lf\n", g_lon, g_lat, ang_sep);
+	     //ang_sep = skysep_h(target_ra, target_dec, ra, dec);
+	     //ang_sep1 = skysep_h(target_ra, target_dec, ra1, dec1);
+	  } else {
+		ang_sep = skysep_h(target_ra, target_dec, ra, dec);
+		ang_sep1 = skysep_h(target_ra, target_dec, ra1, dec1);
+	  }
 	}
 
 /* Check for single sat. or if in search area for both start and end epoch */

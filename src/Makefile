@@ -10,7 +10,7 @@ HPXDIR = ../HealpixC
 HPXLIB = -L$(HPXDIR) -lchealpix
 HPXINC = -I$(HPXDIR)
 
-CFLAGS = -Wall -O3 -fPIC $(HPXINC) # -DDEBUG
+CFLAGS = -g -Wall -O3 -fPIC $(HPXINC) # -DDEBUG
 
 # Using shared lib
 # LDLIBS = -L. -l$(LNAME) -lm

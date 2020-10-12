@@ -26,8 +26,9 @@ to find those present in a given sky region at a given time observing from a giv
 `sat_skymap` requires as input:
 1. a TLE file (*first or last command-line argument*),
 2. the observer position (geodetic Lon, Lat, Alt),
-3. the (circular) region RA/Dec (J2000) and search radius,
-4. date/time.
+3. the (circular) region center (RA, Dec - J2000 - can be omitted if geodetic position used as reference),
+4. the region search radius,
+5. reference date-time.
 
 Invoke the tool without parameters to see predefined parameters and example. Use the `-h` switch for help:
 
@@ -50,8 +51,10 @@ OPTIONS are:
 
 Switches:
   -h			print this help
+  -E			Use input geodetic location as reference location for region (-G by def., -p ignored)
+
   -G			Compute (and return) geodetic location for each satellite
-  -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)
+  -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested!)
   -I			Information about the returned data and number of satellites found
  			('satellites' object not returned)
   -T			Use default repository directory for TLE files (see sat_skymap_def.h; def. ./) 
@@ -84,14 +87,14 @@ Additional computed info:
 -  Local Mean Sidereal Time and Greenwich Mean Sidereal Time (hours)
 -  Region Az, Alt, Parang
 -  Sun RA/Dec, Alt/Az, geodetic longitude coordinates, parallactic angle and distance from region center (or zenith).
--  Geodetic Lon, Lat, Alt and theta (*for single satellite enquire*)
+-  Geodetic Lon, Lat, Alt and theta (*for single satellite enquire* or if requested)
 
 ```
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -j58861.5 -p90.5,-30.3 -r20
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -d2020-01-13T12:00:00 -p90.5,-30.3 -r20
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-04-28", "version": "0.2c"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-10-10", "version": "0.2d"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -128,8 +131,26 @@ JSON shown in expanded format.
 	"swinfo": {
 		"name": "sat_skymap",
 		"author": "L. Nicastro @ INAF-OAS",
-		"date": "2020-04-28",
-		"version": "0.2c"
+		"date": "2020-10-10",
+		"version": "0.2d"
+	},
+	"geoloc_fields":{
+		"lat":{
+			"desc":"Geodetic Latitude",
+			"unit":"deg"
+		},
+		"lon":{
+			"desc":"Geodetic Longitude",
+			"unit":"deg"
+		},
+		"alt":{
+			"desc":"Geodetic Altitude",
+			"unit":"km"
+		},
+		"theta":{
+			"desc":"Equatorial angle (Lon + GMST = RA)",
+			"unit":"deg"
+		}
 	},
 	"input_params": {
 		"tle_file": "stations.txt",
