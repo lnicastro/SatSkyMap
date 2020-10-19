@@ -4,24 +4,27 @@ src/.libs
 src/*.dSYM
 
 # Prerequisites
-*.d
+src/*.d
 
 # Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
+src/*.slo
+src/*.lo
+src/*.o
+src/*.obj
+HealpixC/*.o
 
 # Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+src/*.so
+src/*.dylib
+src/*.dll
+HealpixC/*.so
 
 # Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+src/*.lai
+src/*.la
+src/*.a
+src/*.lib
+HealpixC/*.a
 
 # Executables
-sat_skymap
+src/sat_skymap
