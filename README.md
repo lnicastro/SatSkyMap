@@ -38,7 +38,7 @@ Usage:
   sat_skymap tle_file [OPTIONS]
 
 OPTIONS are:
-  -a Alt_min,Alt_max  Geodetic altitude range filter (km, -G assumed by def.)
+  -a Alt_min,Alt_max	Geodetic altitude range filter (km, -G assumed by def.)
   -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
   -i sat_intnlname	(TODO) Single satellite selection via its international designator (region ignored)
   -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
