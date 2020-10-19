@@ -12,6 +12,7 @@
     and RA/Dec provided on the command line.
 
   Input Parameters:
+    -a Alt_min,Alt_max	Geodetic altitude range filter (km, -G assumed by def.)
     -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
     -i sat_intnlname	(TODO) Single satellite selection via its international designator (region ignored)
     -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
@@ -104,7 +105,7 @@
   }
 
 
-   LN @ INAF-OAS, Jan 2020.  Last change: 12/10/2020
+   LN @ INAF-OAS, Jan 2020.  Last change: 19/10/2020
 */
 
 #include <ctype.h>
@@ -135,7 +136,9 @@
 		parang,
 		gmst,
 		lmst,
-		mjd;
+		mjd,
+		alt_min,
+		alt_max;
 	    int delta_time,
 		max_sats,
 		norad_n;
@@ -145,6 +148,7 @@
 		single_sat_n,
 		geoloc_requested,
 		geoloc_reference,
+		altrng_requested,
 		use_deftledir;
   } Params;
 
@@ -182,10 +186,11 @@ char *trimend(char *str)
 void Usage() {
   printf("Usage:\n  %s tle_file [OPTIONS]\n\n"
   "OPTIONS are:\n"
+  "  -a Alt_min,Alt_max	Geodetic altitude range filter (km, -G assumed by def.)\n"
   "  -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])\n"
   "  -i sat_intnlname	Single satellite selection via its international designator (region ignored)\n"
   "  -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)\n"
-  "  -l lat,lon,alt	Geodetic observing site (comma separated data with no spaces)\n"
+  "  -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)\n"
   "  -n MaxSats		Maximum number of satellites to return (def. 1000)\n"
   "  -p Ra,Dec		J2000 sky coordinates of region to check\n"
   "  -r radius		Region radius centered at the given coords\n"
@@ -351,8 +356,11 @@ int main(int argc, char **argv)
   p.geoloc_reference = false;  /* If region selection must refer to geodetic location
 				rather than RA, Dec. If true, p.geoloc_requested is also set to true. */ 
   p.use_deftledir = false;  /* If default directory with TLE files should be used (def. ./) */
+  p.altrng_requested = false;  /* If altitude range filter requested */
   p.intl_desig[0] = '\0';
   p.norad_n = 0;
+  p.alt_min = 0;
+  p.alt_max = 1e32;
 
 
 /* Note: no check on validity of input parameters! Could also use getarg. */
@@ -393,7 +401,18 @@ int main(int argc, char **argv)
 		p.use_deftledir = true;
 		i--;
 		break;
+
 	  /* Parameters */
+          case 'a':
+		sscanf(argv[i] + par_pos, "%lf,%lf", &p.alt_min, &p.alt_max);
+		if ( p.alt_max < p.alt_min )  {
+		  double dummy = p.alt_max;
+		  p.alt_max = p.alt_min;
+		  p.alt_min = dummy;
+		}
+		p.altrng_requested = true;
+		p.geoloc_requested = true;
+		break;
           case 'd':
 		strcpy(p.date, argv[i] + par_pos);
 		date2mjd(argv[i] + par_pos, &p.mjd);
@@ -405,6 +424,7 @@ int main(int argc, char **argv)
           case 'i':
 		strcpy(p.intl_desig, argv[i] + par_pos);
 		p.single_sat_i = true;
+		p.altrng_requested = false;  // No altitude filter
 		break;
           case 'j':
 		p.mjd = atof(argv[i] + par_pos);
@@ -412,6 +432,18 @@ int main(int argc, char **argv)
 		break;
           case 'l':
 		sscanf(argv[i] + par_pos, "%lf,%lf,%lf", &p.lat, &p.lon, &p.ht_in_meters);
+		if ( p.lon < -180. || p.lon > 180. )  {
+		  open_json();
+		  sprintf(errmsg, "Longitude must be in the range [-180, +180] degrees. Read '%lf'", p.lon);
+  		  close_stat_json(-1, errmsg, n_sats_found, n_sats);
+		  exit(-1);
+		}
+		if ( p.lat < -90. || p.lat > 90. )  {
+		  open_json();
+		  sprintf(errmsg, "Latitude must be in the range [-90, +90] degrees. Read '%lf'", p.lat);
+  		  close_stat_json(-1, errmsg, n_sats_found, n_sats);
+		  exit(-1);
+		}
 		break;
           case 'n':
 		sscanf(argv[i] + par_pos, "%d", &p.max_sats);
@@ -438,6 +470,7 @@ int main(int argc, char **argv)
           case 's':
 		p.norad_n = strtol(argv[i] + par_pos, &endptr, 10);
 		p.single_sat_n = true;
+		p.altrng_requested = false;  // No altitude filter
 		break;
           case 't':
 		p.delta_time = atof(argv[i] + par_pos);
@@ -706,6 +739,11 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	if ( p.geoloc_requested )
 		sat_geoLocation(p.gmst, pos,  &geo);
 
+/* If altitude filter requested */
+	if ( p.altrng_requested )
+		if ( geo.alt < p.alt_min || geo.alt > p.alt_max )
+			continue;
+
 	epoch_of_date_to_j2000(jd, &ra, &dec);  /* Approx precession. Returned RA, Dec in radians. */
 
 /* Compute position delta_time seconds later to
@@ -764,7 +802,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 
 /* Check for single sat. or if in search area for both start and end epoch */
 	if ( single_sat ||  /* for single satellite ignore region */
-	     ang_sep < p.search_radius || ang_sep1 < p.search_radius )  /* good enough */
+	     ang_sep <= p.search_radius || ang_sep1 <= p.search_radius )  /* good enough */
 	{
             line1[16] = '\0';
             double speed, posn_ang_of_motion;

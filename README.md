@@ -4,7 +4,7 @@ as seen from a given point on Earth at a given epoch.
 Single satellite info, regardless of its sky position, can be requested, too.
 The executable tool name is `sat_skymap`.
 
-An interactive [web tool](https://cats.oas.inaf.it/SatSkyweb/) is available at INAF OAS Bologna.
+An interactive [web tool](https://cats.oas.inaf.it/SatSkyweb/) is available at INAF-OAS Bologna.
 
 ## Requirements
 Two Lines Element (TLE) files, possibly with *up-to-date parameters*. See [here](https://celestrak.com/columns/v04n03/) for a description.
@@ -38,6 +38,7 @@ Usage:
   sat_skymap tle_file [OPTIONS]
 
 OPTIONS are:
+  -a Alt_min,Alt_max  Geodetic altitude range filter (km, -G assumed by def.)
   -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
   -i sat_intnlname	(TODO) Single satellite selection via its international designator (region ignored)
   -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
@@ -52,7 +53,6 @@ OPTIONS are:
 Switches:
   -h			print this help
   -E			Use input geodetic location as reference location for region (-G by def., -p ignored)
-
   -G			Compute (and return) geodetic location for each satellite
   -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested!)
   -I			Information about the returned data and number of satellites found

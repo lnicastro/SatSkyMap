@@ -1,1 +1,6 @@
-TBD
+2020-10-12 LN, ver. 0.1d
+	- Added "-E" flag to use input geodetic location as reference region
+
+2020-10-19 LN, ver. 0.2d
+	- Added "-a" option to input Alt_min,Alt_max geodetic altitude range filter
+	- "tle_retrieve.sh" updated to include TESS

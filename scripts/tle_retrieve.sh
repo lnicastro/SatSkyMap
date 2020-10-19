@@ -8,7 +8,7 @@
 #
 # Edit to match your needs.
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 22/04/2020
+# LN @ INAF-OAS Jan. 2020.  Last change: 19/10/2020
 #--
 
 set +o noclobber
@@ -93,7 +93,7 @@ done
 #
 awk '/HST|CXO|GLAST|SWIFT|NUSTAR|AGILE|INTEGRAL|ASTROSAT|HXMT|XMM|WISE|SDO/ { print ; for(n=0; n<2; n++) { getline ; print } }' science.txt | tr -d '\r' > special.txt
 awk '/ZARYA/ { print ; for(n=0; n<2; n++) { getline ; print } }' stations.txt | tr -d '\r' >> special.txt
-awk '/CHEOPS/ { print ; for(n=0; n<2; n++) { getline ; print } }' active.txt | tr -d '\r' >> special.txt
+awk '/CHEOPS|TESS/ { print ; for(n=0; n<2; n++) { getline ; print } }' active.txt | tr -d '\r' >> special.txt
 
 
 # Add Gaia TLE from 2020 list
