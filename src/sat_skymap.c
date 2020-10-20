@@ -105,7 +105,7 @@
   }
 
 
-   LN @ INAF-OAS, Jan 2020.  Last change: 19/10/2020
+  LN @ INAF-OAS, Jan 2020.  Last change: 20/10/2020
 */
 
 #include <ctype.h>
@@ -432,12 +432,9 @@ int main(int argc, char **argv)
 		break;
           case 'l':
 		sscanf(argv[i] + par_pos, "%lf,%lf,%lf", &p.lat, &p.lon, &p.ht_in_meters);
-		if ( p.lon < -180. || p.lon > 180. )  {
-		  open_json();
-		  sprintf(errmsg, "Longitude must be in the range [-180, +180] degrees. Read '%lf'", p.lon);
-  		  close_stat_json(-1, errmsg, n_sats_found, n_sats);
-		  exit(-1);
-		}
+		/* Longitude locally in the range [0, 360[ (not [-180, +180]) degrees */
+		if ( p.lon < 0. )
+		  p.lon += 360;
 		if ( p.lat < -90. || p.lat > 90. )  {
 		  open_json();
 		  sprintf(errmsg, "Latitude must be in the range [-90, +90] degrees. Read '%lf'", p.lat);
@@ -452,13 +449,13 @@ int main(int argc, char **argv)
 		sscanf(argv[i] + par_pos, "%lf,%lf", &p.ra_deg, &p.de_deg);
 		if ( p.ra_deg < 0. || p.ra_deg > 360. )  {
 		  open_json();
-		  sprintf(errmsg, "RA must be in the range 0, 360 degrees. Read '%lf'", p.ra_deg);
+		  sprintf(errmsg, "RA must be in the range [0, 360[ degrees. Read '%lf'", p.ra_deg);
   		  close_stat_json(-1, errmsg, n_sats_found, n_sats);
 		  exit(-1);
 		}
 		if ( p.de_deg < -90. || p.de_deg > 90. )  {
 		  open_json();
-		  sprintf(errmsg, "Dec must be in the range -90, +90 degrees. Read '%lf'", p.de_deg);
+		  sprintf(errmsg, "Dec must be in the range [-90, +90] degrees. Read '%lf'", p.de_deg);
   		  close_stat_json(-1, errmsg, n_sats_found, n_sats);
 		  exit(-1);
 		}
@@ -578,7 +575,8 @@ int main(int argc, char **argv)
 
   lpsun_radec(jd, &sun.ra, &sun.dec);
 
-  sun.lon = fmod(p.gmst * 15. + 360. - sun.ra * RAD2DEG, 360.);  /* Lon in [0, 360[ deg */
+/* Lon in [0, 360[ deg +W */
+  sun.lon = fmod(p.gmst * 15. + 360. - sun.ra * RAD2DEG, 360.);
  
   hasun = p.lmst - sun.ra * RAD2HRS;
   dechalat2alt(sun.dec, hasun, p.lat, &sun.alt, &sun.az, &sun.parang);
@@ -588,12 +586,11 @@ int main(int argc, char **argv)
   else
     sun.sep = skysep_h(target_ra, target_dec, sun.ra, sun.dec);
 
-
-
   sun.ra *= RAD2DEG;
   sun.dec *= RAD2DEG;
 
-  if ( sun.lon > 180. )  /* Lon in [-180, +180] deg */
+/* Lon in [-180, +180] deg +E */
+  if ( sun.lon > 180. )
 	sun.lon = 360. - sun.lon;
   else
 	sun.lon *= -1;
