@@ -9,9 +9,14 @@
 */
 double skysep_h(const double theta1, const double phi1, const double theta2, const double phi2)
 {
-  double radif, sin2a, sin2d;
+  double radif, sin2a, sin2d,
+	 t1 = theta1, t2 = theta2;
 
-  if (theta1 < 0. || theta2 < 0.) return -1.;
+// Manage Geodetic Lon which is in [-180, +180]. Do not check Phi
+  if ( theta1 < 0. )
+	t1 += TWOPI;
+  if ( theta2 < 0. )
+	t2 += TWOPI;
 
   radif  = fabs(theta2-theta1);
   if (radif > PI) radif = TWOPI - radif;

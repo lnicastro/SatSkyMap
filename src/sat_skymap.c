@@ -105,7 +105,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 20/10/2020
+  LN @ INAF-OAS, Jan 2020.  Last change: 26/10/2020
 */
 
 #include <ctype.h>
@@ -782,11 +782,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	  }
 	} else {
 	  if ( p.geoloc_reference ) {
-		d_ra = geo.lon; // , g_lat = geo.lat * DEG2RAD;
-		if ( d_ra < 0 )
-		  d_ra += 360;
-		d_ra *= DEG2RAD;
-		ang_sep = skysep_h(target_lon, target_lat, d_ra, geo.lat * DEG2RAD);
+		ang_sep = skysep_h(target_lon, target_lat, geo.lon * DEG2RAD, geo.lat * DEG2RAD);
 		ang_sep1 = 2 * ang_sep;  // dummy
 //printf("\ng_lon, g_lat, ang_sep: %lf %lf %lf\n", g_lon, g_lat, ang_sep);
 	     //ang_sep = skysep_h(target_ra, target_dec, ra, dec);
