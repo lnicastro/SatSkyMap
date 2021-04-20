@@ -4,3 +4,8 @@
 2020-10-19 LN, ver. 0.2d
 	- Added "-a" option to input Alt_min,Alt_max geodetic altitude range filter
 	- "tle_retrieve.sh" updated to include TESS
+
+2021-04-20 LN, ver. 0.2d
+	- Fixed searching satellite by international designator 
+	- Code cleaning and README updated
+	- .gitignore updated

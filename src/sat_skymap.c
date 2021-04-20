@@ -12,26 +12,26 @@
     and RA/Dec provided on the command line.
 
   Input Parameters:
-    -a Alt_min,Alt_max	Geodetic altitude range filter (km, -G assumed by def.)
+    -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)
     -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
-    -i sat_intnlname	(TODO) Single satellite selection via its international designator (region ignored)
+    -i sat_intnlname	Single satellite selection via its international designator (region ignored)
     -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
     -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)
     -n MaxSats		Maximum number of satellites to return (def. 1000)
     -p RA,Dec		J2000 sky coordinates of region to check
     -r radius		Region radius centered at the given coords
     -s sat_norad_n	Single satellite selection via its NORAD number (region ignored)
-    -t deltat		Second epoch delta time (s, def. 1)
-    -D DirTLEs		Directory with the repository of TLE files (def ./; ignore -T option)
+    -t deltaT		Second epoch delta time (seconds; def. 1)
+    -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)
 
   Switches:
     -h			print this help
-    -E			Use input geodetic location as reference location for region (-G by def., -p ignored)
+    -E			Use input geodetic location as reference location for region (-G by def.; -p ignored)
     -G			Compute (and return) geodetic location for each satellite
     -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested! Default?)
-    -I			Information about the returned data and number of satellites found
+    -I			Only information about the returned data and number of satellites found
   			('satellites' object not returned)
-    -T			Use default repository directory for TLE files (see sat_skymap_def.h; def. ./) 
+    -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h) 
 
   Output:
     A json string with information about the satellites in the FoV (see below).
@@ -45,7 +45,7 @@
   (latitude, longitude, altitude) = (-29.25627, -70.7380, 2400),
   on MJD 58861.5 (UTC: 2020-01-13 12h = 2020-01-13T12:00:00),
   at (RA, Dec) = 90.5, +30.3 (deg), within a 20-deg search radius.
-  Positions at given JD + deltat (def. 1) s is also computed and returned.
+  Positions at given JD + deltaT (def. 1 s) is also computed and returned.
   Additional computed info:
     Local Mean Sidereal Time
     region Az, Alt, Parang
@@ -105,7 +105,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 26/10/2020
+  LN @ INAF-OAS, Jan 2020.  Last change: 20/04/2021
 */
 
 #include <ctype.h>
@@ -186,25 +186,25 @@ char *trimend(char *str)
 void Usage() {
   printf("Usage:\n  %s tle_file [OPTIONS]\n\n"
   "OPTIONS are:\n"
-  "  -a Alt_min,Alt_max	Geodetic altitude range filter (km, -G assumed by def.)\n"
+  "  -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)\n"
   "  -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])\n"
   "  -i sat_intnlname	Single satellite selection via its international designator (region ignored)\n"
   "  -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)\n"
   "  -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)\n"
   "  -n MaxSats		Maximum number of satellites to return (def. 1000)\n"
-  "  -p Ra,Dec		J2000 sky coordinates of region to check\n"
+  "  -p RA,Dec		J2000 sky coordinates of region to check\n"
   "  -r radius		Region radius centered at the given coords\n"
   "  -s sat_norad_n	Single satellite selection via its NORAD number (region ignored)\n"
-  "  -t deltat		Second epoch delta time (s, def. 1)\n"
-  "  -D DirTLEs		Directory with the repository of TLE files (def ./; ignore -T option)\n\n"
+  "  -t deltaT		Second epoch delta time (seconds; def. 1)\n"
+  "  -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)\n\n"
   "\nSwitches:\n"
   "  -h			print this help\n"
-  "  -E			Use input geodetic location as reference location for region (-G by def., -p ignored) \n"
+  "  -E			Use input geodetic location as reference location for region (-G by def.; -p ignored) \n"
   "  -G			Compute (and return) geodetic location for each satellite\n"
   "  -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested!)\n"
-  "  -I			Information about the returned data and number of satellites found\n"
+  "  -I			Only information about the returned data and number of satellites found\n"
   " 			('satellites' object not returned)\n\n"
-  "  -T			Use default repository directory for TLE files (see sat_skymap_def.h; def. ./)\n"
+  "  -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h)\n"
 
   "Example usage:\n"
   "  %s default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20\n"
@@ -512,7 +512,7 @@ int main(int argc, char **argv)
 	//tle_list_file = ++argv[1];
 	sprintf(tle_list_file, "%s/%s", tle_path, ++argv[iarg]);
 	if ( !(lisfile = fopen(tle_list_file, "rb")) ) {
-		sprintf(errmsg, "Couldn't open input file %s", tle_list_file);
+		sprintf(errmsg, "Could not open input file %s", tle_list_file);
   		close_stat_json(2, errmsg, n_sats_found, n_sats);
 		exit(2);
 	}
@@ -610,89 +610,78 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 /* Loop on list of tle files or simple open of single input file */
   while ( read_tle_list ) {
 
-	char *lastchar;
-	if ( !input_list ) {
-		if ( strchr(tle_file_name, '/') == NULL )
-		  sprintf(tle_path_file, "%s/%s", tle_path, argv[iarg]);
-		else
-		  strcpy(tle_path_file, tle_file_name);
+    char *lastchar;
+    if ( !input_list ) {
+	if ( strchr(tle_file_name, '/') == NULL )
+	  sprintf(tle_path_file, "%s/%s", tle_path, argv[iarg]);
+	else
+	  strcpy(tle_path_file, tle_file_name);
+	  read_tle_list = false;
+    } else {
 
-		read_tle_list = false;
-	} else {
-
-		tle_file_name = row;
-		if ( fgets(row, fname_len, lisfile) == NULL )
-		  break;
-		if ( row[0] == '#' )  /* Skip lines with comments */
-		  continue;
-		lastchar = tle_file_name + strlen(tle_file_name) - 1;  /* Drop linefeeds, CR, ... */
-		if (*lastchar < 32)
-		  *lastchar = (char) 0;
-		if ( strlen(row) == 0 )  /* Skip empty lines */
-		  continue;
-		sprintf(tle_path_file, "%s/%s", tle_path, tle_file_name);
-	}
+	tle_file_name = row;
+	if ( fgets(row, fname_len, lisfile) == NULL )
+	  break;
+	if ( row[0] == '#' )  /* Skip lines with comments */
+	  continue;
+	lastchar = tle_file_name + strlen(tle_file_name) - 1;  /* Drop linefeeds, CR, ... */
+	if (*lastchar < 32)
+	  *lastchar = (char) 0;
+	if ( strlen(row) == 0 )  /* Skip empty lines */
+	  continue;
+	sprintf(tle_path_file, "%s/%s", tle_path, tle_file_name);
+    }
  
-	if ( !(ifile = fopen(tle_path_file, "rb")) ) {  /* Report error message but do not stop */
-		sprintf(errmsg, "Couldn't open input file %s", tle_path_file);
-  		close_stat_json(0, errmsg, n_sats_found, n_sats);
-		continue;
-	}
+    if ( !(ifile = fopen(tle_path_file, "rb")) ) {  /* Report error message and stop */
+	sprintf(errmsg, "Could not open input file %s", tle_path_file);
+  	close_stat_json(2, errmsg, n_sats_found, n_sats);
+	exit(2);
+    }
 
 
- 	if ( !fgets( line1, sizeof(line1), ifile) ) {
-		sprintf(errmsg, "Couldn't read first TLE line from file %s", tle_path_file);
-		close_stat_json(-2, errmsg, n_sats_found, n_sats);
-		exit(-2);
-	}
+    if ( !fgets( line1, sizeof(line1), ifile) ) {
+	sprintf(errmsg, "Could not read first TLE line from file %s", tle_path_file);
+	close_stat_json(-2, errmsg, n_sats_found, n_sats);
+	exit(-2);
+    }
 
-	strncpy(sat_name, line1, 23);
-	trimend(sat_name);
+    strncpy(sat_name, line1, 23);
+    trimend(sat_name);
 
     while ( fgets(line2, sizeof(line2), ifile) ) {
 
       tle_t tle;  /* Structure for two-line elements set for satellite */
 
-      if ( !parse_elements(line1, line2, &tle) )  /* TLE found */
-      {
+      if ( !parse_elements(line1, line2, &tle) ) { /* TLE found */
 /* First check if we have processed this sat already */
-	 strncpy(norad_name, line1+2, 5);  /* this is tle.norad_number */
-	 norad_name[5] = '\0';
+	strncpy(norad_name, line1+2, 5);  /* this is tle.norad_number */
+	norad_name[5] = '\0';
 //printf("NORAD:->%s\n", norad_name);
 
-	  char intl_desig[12] = {"none"};
-	  if ( p.single_sat_n ) {
+	 char intl_desig[12] = {"none"};
+	 if ( p.single_sat_n ) {
 		int norad_name_n = strtol(norad_name, &endptr, 10);
 		if ( norad_name_n == p.norad_n )
 			single_sat_found = true;
-	  } else if ( p.single_sat_i ) {
+	 } else if ( p.single_sat_i ) {
+		if ( tle.intl_desig[0] != ' ' )
+		  snprintf( intl_desig, 10, "%s%.2s-%s",
+			(atoi( tle.intl_desig) > 57000 ? "19" : "20"),
+			tle.intl_desig, tle.intl_desig + 2);
 
-		if ( tle.intl_desig[0] != ' ' ) {
-			short launch_year;
-			strncpy(intl_desig, tle.intl_desig, 2);
-			sscanf(intl_desig, "%hd", &launch_year);
-			if ( launch_year < 50 || launch_year > 99 )
-			  strcpy(intl_desig, "20");
-			else
-			  strcpy(intl_desig, "19");
-			strncat(intl_desig, tle.intl_desig, 2);
-			strcat(intl_desig, "-");
-			strcat(intl_desig, &line1[11]);
-		}
-
-		if ( intl_desig == p.intl_desig )
-			single_sat_found = true;
-	    }
+		if ( !memcmp(intl_desig, p.intl_desig, 12) )
+		  single_sat_found = true;
+	}
  
 /* Single satellite requested? */
-	 if ( single_sat && !single_sat_found )
+	if ( single_sat && !single_sat_found )
 		continue;
 /* Add a , to make it unique, and skip any previously met satellite */
-	 strcat(norad_name, ",");
-	 if ( (s = strstr(sbuff, norad_name)) != NULL ) {
+	strcat(norad_name, ",");
+	if ( (s = strstr(sbuff, norad_name)) != NULL ) {
 //printf("Found string '%s' at index = %ld ... skipping.\n", norad_name, s - sbuff);
 		continue;
-	 } else {
+	} else {
 		if ( use_bufflen >= cur_bufflen ) {
 		  cur_bufflen += extra_satbuff;
 //printf("\nRealloc extra bytes. Now %d \n", cur_bufflen);
@@ -704,7 +693,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 		}
 		strcat(sbuff, norad_name);
 		use_bufflen += 6;
-	 }
+	}
 
 	int is_deep = select_ephemeris(&tle);
 //printf("is_deep: %d\n", is_deep);
@@ -716,11 +705,11 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	t_since = (jd - tle.epoch) * 1440.;  /* From days to minutes */
 
 	if ( is_deep ) {
-            SDP4_init(sat_params, &tle);
-            SDP4(t_since, &tle, sat_params, pos, NULL);
+		SDP4_init(sat_params, &tle);
+		SDP4(t_since, &tle, sat_params, pos, NULL);
 	} else {
-            SGP4_init(sat_params, &tle);
-            SGP4(t_since, &tle, sat_params, pos, NULL);
+		SGP4_init(sat_params, &tle);
+		SGP4(t_since, &tle, sat_params, pos, NULL);
 	}
 	get_satellite_ra_dec_delta(observer_loc, pos, &ra, &dec, &sep_to_satellite);
 /* For malformed or partial tle (e.g. Bepi-Colombo) this could happen */
@@ -795,42 +784,33 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 
 /* Check for single sat. or if in search area for both start and end epoch */
 	if ( single_sat ||  /* for single satellite ignore region */
-	     ang_sep <= p.search_radius || ang_sep1 <= p.search_radius )  /* good enough */
-	{
-            line1[16] = '\0';
-            double speed, posn_ang_of_motion;
+		ang_sep <= p.search_radius || ang_sep1 <= p.search_radius ) {  /* good enough */
+	  line1[16] = '\0';
+	  double speed, posn_ang_of_motion;
 
-	    if ( !p.single_sat_i ) {
-		if ( tle.intl_desig[0] != ' ' ) {
-	          short launch_year;
-	          strncpy(intl_desig, tle.intl_desig, 2);
-	          sscanf(intl_desig, "%hd", &launch_year);
-	          if ( launch_year < 50 || launch_year > 99 )
-		    strcpy(intl_desig, "20");
-	          else
-		    strcpy(intl_desig, "19");
-	          strncat(intl_desig, tle.intl_desig, 2);
-	          strcat(intl_desig, "-");
-	          strcat(intl_desig, &line1[11]);
-		}
-	    }
+	  if ( !p.single_sat_i ) {
+		if ( tle.intl_desig[0] != ' ' )
+		  snprintf( intl_desig, 10, "%s%.2s-%s",
+			(atoi( tle.intl_desig) > 57000 ? "19" : "20"),
+			tle.intl_desig, tle.intl_desig + 2);
+	  }
 
-	    d_ra = (ra1 - ra + TWOPI);
-	    if ( d_ra > PI )
-               d_ra -= TWOPI;
-	    d_ra *= cos(dec);
-	    d_dec = dec1 - dec;
-	    posn_ang_of_motion = atan2(d_ra, d_dec);
-	    if ( posn_ang_of_motion < 0. )
-	      posn_ang_of_motion += TWOPI;
+	  d_ra = (ra1 - ra + TWOPI);
+	  if ( d_ra > PI )
+		d_ra -= TWOPI;
+	  d_ra *= cos(dec);
+	  d_dec = dec1 - dec;
+	  posn_ang_of_motion = atan2(d_ra, d_dec);
+	  if ( posn_ang_of_motion < 0. )
+		posn_ang_of_motion += TWOPI;
 //speed = sqrt(d_ra * d_ra + d_dec * d_dec) * RAD2DEG * 60 / p.delta_time;  // arcmin / s
-	    speed = skysep_h(ra, dec, ra1, dec1) * 60 / p.delta_time;
+	  speed = skysep_h(ra, dec, ra1, dec1) * 60 / p.delta_time;
 
 /* HEALPix order 8 nested ID */
-	    theta = (PI/2. - dec);
-	    ang2pix_nest(nside, theta, ra, &id8nest);
+	  theta = (PI/2. - dec);
+	  ang2pix_nest(nside, theta, ra, &id8nest);
 
-	    if ( !p.info_only ) {
+	  if ( !p.info_only ) {
 		if ( n_sats_found > 0 )
 		  printf(", ");
 		else {
@@ -849,24 +829,24 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 			sep_to_satellite, ang_sep,
 			(int)(posn_ang_of_motion * RAD2DEG), speed, id8nest);
 /* Speed is displayed in arcminutes/second (== degrees/minute) */
-	    }
-	    n_sats_found++;
+	  }
+	  n_sats_found++;
 
-	    if ( single_sat_found || n_sats_found == p.max_sats ) {
+	  if ( single_sat_found || n_sats_found == p.max_sats ) {
 		fclose(ifile);
 		goto end_checking;
-	    }
-          }  // end if ang_sep < p.search_radius
-        }  // end TLE found
+	  }
+	} // end if ang_sep < p.search_radius
+      }  // end TLE found
 
-        strcpy(line1, line2);
-	if ( line2[0] != '1' && line2[0] != '2' ) {
+      strcpy(line1, line2);
+      if ( line2[0] != '1' && line2[0] != '2' ) {
 	  strncpy(sat_name, line2, 23);
 	  trimend(sat_name);
-	}
-      }  // end while fgets(line2 ...
+      }
+    }  // end while fgets(line2 ...
 
-      fclose(ifile);
+    fclose(ifile);
   }  // end while read_tle_list
 
 

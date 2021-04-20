@@ -28,3 +28,6 @@ HealpixC/*.a
 
 # Executables
 src/sat_skymap
+
+# More stuff
+.DS_Store

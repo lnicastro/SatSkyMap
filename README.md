@@ -4,7 +4,7 @@ as seen from a given point on Earth at a given epoch.
 Single satellite info, regardless of its sky position, can be requested, too.
 The executable tool name is `sat_skymap`.
 
-An interactive [web tool](https://cats.oas.inaf.it/SatSkyweb/) is available at INAF-OAS Bologna.
+An interactive [web tool](https://sats.oas.inaf.it/) is available at INAF-OAS Bologna.
 
 ## Requirements
 Two Lines Element (TLE) files, possibly with *up-to-date parameters*. See [here](https://celestrak.com/columns/v04n03/) for a description.
@@ -38,26 +38,26 @@ Usage:
   sat_skymap tle_file [OPTIONS]
 
 OPTIONS are:
-  -a Alt_min,Alt_max	Geodetic altitude range filter (km, -G assumed by def.)
+  -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)
   -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
-  -i sat_intnlname	(TODO) Single satellite selection via its international designator (region ignored)
+  -i sat_intnlname	Single satellite selection via its international designator (region ignored)
   -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
   -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)
   -n MaxSats		Maximum number of satellites to return (def. 1000)
   -p RA,Dec		J2000 sky coordinates of region to check
   -r radius		Region radius centered at the given coords
   -s sat_norad_n	Single satellite selection via its NORAD number (region ignored)
-  -t deltat		Second epoch delta time (s, def. 1)
-  -D DirTLEs		Directory with the repository of TLE files (def ./; ignore -T option)
+  -t deltaT		Second epoch delta time (seconds; def. 1)
+  -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)
 
 Switches:
   -h			print this help
-  -E			Use input geodetic location as reference location for region (-G by def., -p ignored)
+  -E			Use input geodetic location as reference location for region (-G by def.; -p ignored)
   -G			Compute (and return) geodetic location for each satellite
   -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested!)
-  -I			Information about the returned data and number of satellites found
+  -I			Only information about the returned data and number of satellites found
  			('satellites' object not returned)
-  -T			Use default repository directory for TLE files (see sat_skymap_def.h; def. ./) 
+  -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h) 
 
 Example usage:
   sat_skymap default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20
@@ -82,7 +82,7 @@ Scan the TLE element file 'default.tle' for satellites visible from
 -  on MJD 58861.5 (UTC: 2020-01-13 12h = 2020-01-13T12:00:00),
 -  at (RA, Dec) = 90.5, +30.3 (deg), within a 20-deg search radius.
 
-Positions at given JD + deltat (def. 1) s is also computed and returned.
+Positions at given JD + deltaT (def. 1 s) is also computed and returned.
 Additional computed info:
 -  Local Mean Sidereal Time and Greenwich Mean Sidereal Time (hours)
 -  Region Az, Alt, Parang

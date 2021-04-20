@@ -1,14 +1,14 @@
 #!/bin/bash
 # 
-# Retrive TLE data from SpaceTrack
+# Can also retrive TLE data from Space-Track (https://www.space-track.org/).
 #
-# See: https://celestrak.com/NORAD/elements/
+# This script uses CelesTrak (https://celestrak.com/NORAD/elements/)
 #
 # To get TLE for a single sat, use the NORAD Id, e.g.: https://celestrak.com/satcat/tle.php?CATNR=44874
 #
 # Edit to match your needs.
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 08/11/2020
+# LN @ INAF-OAS Jan. 2020.  Last change: 19/04/2021
 #--
 
 set +o noclobber
@@ -101,10 +101,11 @@ awk '/CHEOPS|TESS/ { print ; for(n=0; n<2; n++) { getline ; print } }' active.tx
 	echo To have Gaia TLEs move gaia_2020.txt from the scripts to the TLE dir.
   else
 #MJD=`$BINDIR/mjdnow.php | sed -e 's/[^\.]*$//'`  # Remove fractional part
-# Use approx int MJD. See also the C code in src dri.
+# Use approx int MJD. See also the C code in src directory.
 	MJD=`expr $(date +%s) / 86400 + 40588`
 	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "Gaia") > 0 ) { print "Gaia"} else { print } } }' gaia_2020.txt >> special.txt
   fi
+
 
 #
 # Produce the updated list of number of sats in the TLE file. Comment out if not needed.
