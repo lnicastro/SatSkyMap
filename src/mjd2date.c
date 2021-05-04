@@ -1,43 +1,44 @@
 /*
-mjd2date
+ mjd2date
    From MJD to ISO 8601 string date format (DATE-OBS), e.g. "2006-08-07T12:15:11".
    or
-mjd2datef
+ mjd2datef
    From MJD to date in the form "2006-08-07T12:15:11.123".
 
 
   Return '\0' for bad input date.
 
-  LN@IASF-INAF, Aug 2006                       Last change: 30/01/2020
+  LN@INAF-OAS, Aug 2006                       Last change: 04/05/2021
 */
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 
+static  const double DJMIN = -68569.5;
+static  const double DJMAX = 1e9;
+static  const double DJ1 = 2400000.5;
+
+
 /* No fractional seconds */
 char *mjd2date(double mjd)
 { 
   static char date[20];
-  const double DJMIN = -68569.5;
-  const double DJMAX = 1e9;
-  const double dj1=2400000.5;
-
   int iy, im, id, h, mm, s;
   long jd, l, n, i, k;
   double dj, d1, d2, f1, f2, f, d;
 
 
 /* Verify date is acceptable. */
-  dj = dj1 + mjd;
+  dj = DJ1 + mjd;
   if (dj < DJMIN || dj > DJMAX) return 0;
 
 /* Copy the date, big then small, and re-align to midnight. */
-  if (dj1 >= mjd) {
-     d1 = dj1;
+  if (DJ1 >= mjd) {
+     d1 = DJ1;
      d2 = mjd;
   } else {
      d1 = mjd;
-     d2 = dj1;
+     d2 = DJ1;
   }
   d2 -= 0.5;
 
@@ -76,26 +77,22 @@ char *mjd2date(double mjd)
 char *mjd2datef(double mjd)
 { 
   static char date[24];
-  const double DJMIN = -68569.5;
-  const double DJMAX = 1e9;
-  const double dj1=2400000.5;
-
   int iy, im, id, h, mm, s, fs;
   long jd, l, n, i, k;
   double dj, d1, d2, f1, f2, f, d;
 
 
 /* Verify date is acceptable. */
-  dj = dj1 + mjd;
+  dj = DJ1 + mjd;
   if (dj < DJMIN || dj > DJMAX) return 0;
 
 /* Copy the date, big then small, and re-align to midnight. */
-  if (dj1 >= mjd) {
-     d1 = dj1;
+  if (DJ1 >= mjd) {
+     d1 = DJ1;
      d2 = mjd;
   } else {
      d1 = mjd;
-     d2 = dj1;
+     d2 = DJ1;
   }
   d2 -= 0.5;
 

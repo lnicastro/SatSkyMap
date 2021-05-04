@@ -9,3 +9,8 @@
 	- Fixed searching satellite by international designator 
 	- Code cleaning and README updated
 	- .gitignore updated
+
+2021-04-20 LN, ver. 0.3a
+	- Added searching satellites by name substring
+	- Code change/cleaning in mjdnow.c, mjd2date.c  and README updated
+	- .gitignore updated

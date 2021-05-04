@@ -14,13 +14,14 @@
   Input Parameters:
     -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)
     -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
-    -i sat_intnlname	Single satellite selection via its international designator (region ignored)
+    -i SatIntnlName	Single satellite selection via its international designator (region ignored)
     -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
     -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)
     -n MaxSats		Maximum number of satellites to return (def. 1000)
     -p RA,Dec		J2000 sky coordinates of region to check
     -r radius		Region radius centered at the given coords
-    -s sat_norad_n	Single satellite selection via its NORAD number (region ignored)
+    -s SatNorad_n	Single satellite selection via its NORAD number (region ignored)
+    -S SatName		Satellites selection via string name (substring matching applies; region ignored)
     -t deltaT		Second epoch delta time (seconds; def. 1)
     -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)
 
@@ -55,7 +56,7 @@
   The output looks like this:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-10-10", "version": "0.2d"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-05-04", "version": "0.3a"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -87,7 +88,7 @@
   Output:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-10-10", "version": "0.2d"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-05-04", "version": "0.3a"},
   "geoloc_fields": {"lat": {"desc": "Geodetic Latitude", "unit": "deg"}, "lon": {"desc": "Geodetic Longitude", "unit": "deg"}, "alt": {"desc": "Geodetic Altitude", "unit": "km"}, "theta": {"desc": "Equatorial angle (Lon + GMST = RA)", "unit": "deg"}},
   "input_params": {"tle_file": "stations.txt", "location": {"lat": 44.5280, "lon":  11.3371, "alt":    23.5},
     "region": {"ra":  51.2026, "dec": 44.5280, "radius": 20.0000, "lmst":  3.4135, "az":   0.0000, "alt": 90.0000, "parang": 180.000},
@@ -105,7 +106,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 20/04/2021
+  LN @ INAF-OAS, Jan 2020.  Last change: 04/05/2021
 */
 
 #include <ctype.h>
@@ -124,7 +125,8 @@
   typedef struct myParams {
 	  char *tle_file_name,
 		date[24],
-		intl_desig[12];
+		intl_desig[12],
+		satname[24];
 	 double lat,
 		lon,
 		ht_in_meters,
@@ -146,6 +148,7 @@
 		info_only,
 		single_sat_i,
 		single_sat_n,
+		satname_filter,
 		geoloc_requested,
 		geoloc_reference,
 		altrng_requested,
@@ -188,13 +191,14 @@ void Usage() {
   "OPTIONS are:\n"
   "  -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)\n"
   "  -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])\n"
-  "  -i sat_intnlname	Single satellite selection via its international designator (region ignored)\n"
+  "  -i SatIntnlName	Single satellite selection via its international designator (region ignored)\n"
   "  -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)\n"
   "  -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)\n"
   "  -n MaxSats		Maximum number of satellites to return (def. 1000)\n"
   "  -p RA,Dec		J2000 sky coordinates of region to check\n"
   "  -r radius		Region radius centered at the given coords\n"
-  "  -s sat_norad_n	Single satellite selection via its NORAD number (region ignored)\n"
+  "  -s SatNorad_n	Single satellite selection via its NORAD number (region ignored)\n"
+  "  -S SatName		Satellites selection via string name (substring matching applies; region ignored)\n"
   "  -t deltaT		Second epoch delta time (seconds; def. 1)\n"
   "  -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)\n\n"
   "\nSwitches:\n"
@@ -323,7 +327,7 @@ int main(int argc, char **argv)
 	sat_name[25], tle_path_file[200], opt, *endptr;
   double jd, rho_sin_phi, rho_cos_phi, observer_loc[3], observer_loc2[3],
 	 target_ra, target_dec, target_lon = 0, target_lat = 0;
-  int i, par_pos, status = 0, n_sats_found = 0, n_sats = 0;
+  int i, par_pos, status = 0, n_sats_found = 0, n_sats = 0, len_satname = 0;
   bool in_region = false;  /* used for single satellite request */
 
 
@@ -352,12 +356,14 @@ int main(int argc, char **argv)
   p.info_only = false;    /* If just return info about json data and number of satellites in the requested region */
   p.single_sat_i = false; /* If enquire for just 1 satellite using its international designator */
   p.single_sat_n = false; /* If enquire for just 1 satellite using its NORAD number */
+  p.satname_filter = false; /* If select via name matching string */
   p.geoloc_requested = false;  /* If geodetic location requested for each satellite */ 
   p.geoloc_reference = false;  /* If region selection must refer to geodetic location
 				rather than RA, Dec. If true, p.geoloc_requested is also set to true. */ 
   p.use_deftledir = false;  /* If default directory with TLE files should be used (def. ./) */
   p.altrng_requested = false;  /* If altitude range filter requested */
   p.intl_desig[0] = '\0';
+  p.satname[0] = '\0';
   p.norad_n = 0;
   p.alt_min = 0;
   p.alt_max = 1e32;
@@ -425,6 +431,7 @@ int main(int argc, char **argv)
 		strcpy(p.intl_desig, argv[i] + par_pos);
 		p.single_sat_i = true;
 		p.altrng_requested = false;  // No altitude filter
+		in_region = false;
 		break;
           case 'j':
 		p.mjd = atof(argv[i] + par_pos);
@@ -468,6 +475,12 @@ int main(int argc, char **argv)
 		p.norad_n = strtol(argv[i] + par_pos, &endptr, 10);
 		p.single_sat_n = true;
 		p.altrng_requested = false;  // No altitude filter
+		in_region = false;
+		break;
+          case 'S':
+		strcpy(p.satname, argv[i] + par_pos);
+		len_satname = strlen(p.satname);
+		p.satname_filter = true;
 		break;
           case 't':
 		p.delta_time = atof(argv[i] + par_pos);
@@ -597,11 +610,10 @@ int main(int argc, char **argv)
 
 #ifdef DEBUG
 printf("JD %lf \n", jd);
-printf("Region HA, LMST, AZ, Alt, PA: %lf %lf %lf %lf %lf (h, deg, deg, deg)\n", hareg, lmst, p.az, p.alt, p.parang);
+printf("Region HA, LMST, AZ, Alt, PA: %lf %lf %lf %lf %lf (h, deg, deg, deg)\n", hareg, p.lmst, p.az, p.alt, p.parang);
 printf("Sun RA, Dec, sep: %lf %lf  %lf  %lf (deg)\n", sun.ra, sun.dec, sun.lon, sun.sep);
 printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.az, sun.alt, sun.parang);
 #endif
-
   add_sundata_json(sun);
 
 /* Geodetic position */
@@ -616,7 +628,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	  sprintf(tle_path_file, "%s/%s", tle_path, argv[iarg]);
 	else
 	  strcpy(tle_path_file, tle_file_name);
-	  read_tle_list = false;
+	read_tle_list = false;
     } else {
 
 	tle_file_name = row;
@@ -656,6 +668,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 /* First check if we have processed this sat already */
 	strncpy(norad_name, line1+2, 5);  /* this is tle.norad_number */
 	norad_name[5] = '\0';
+//printf("\Satname:->%s\n", sat_name);
 //printf("NORAD:->%s\n", norad_name);
 
 	 char intl_desig[12] = {"none"};
@@ -671,6 +684,9 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 
 		if ( !memcmp(intl_desig, p.intl_desig, 12) )
 		  single_sat_found = true;
+	} else if ( p.satname_filter ) {
+		if ( memcmp(sat_name, p.satname, len_satname) )
+		continue;
 	}
  
 /* Single satellite requested? */
@@ -747,7 +763,6 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 
 	get_satellite_ra_dec_delta(observer_loc2, pos, &ra1, &dec1, &unused_delta2);
 	epoch_of_date_to_j2000(jd, &ra1, &dec1);
-
 /* Approx or precise separation? */
 	if ( !p.haversine ) {
 	  if ( p.geoloc_reference ) {
@@ -773,9 +788,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 	  if ( p.geoloc_reference ) {
 		ang_sep = skysep_h(target_lon, target_lat, geo.lon * DEG2RAD, geo.lat * DEG2RAD);
 		ang_sep1 = 2 * ang_sep;  // dummy
-//printf("\ng_lon, g_lat, ang_sep: %lf %lf %lf\n", g_lon, g_lat, ang_sep);
-	     //ang_sep = skysep_h(target_ra, target_dec, ra, dec);
-	     //ang_sep1 = skysep_h(target_ra, target_dec, ra1, dec1);
+//printf("\ntarget_lon, target_lat, geo.lon, geo.lat, ang_sep, search_radius: %lf %lf  %lf %lf %lf  %lf\n", target_lon, target_lat, geo.lon, geo.lat, ang_sep, p.search_radius);
 	  } else {
 		ang_sep = skysep_h(target_ra, target_dec, ra, dec);
 		ang_sep1 = skysep_h(target_ra, target_dec, ra1, dec1);
@@ -784,6 +797,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 
 /* Check for single sat. or if in search area for both start and end epoch */
 	if ( single_sat ||  /* for single satellite ignore region */
+		p.satname_filter ||
 		ang_sep <= p.search_radius || ang_sep1 <= p.search_radius ) {  /* good enough */
 	  line1[16] = '\0';
 	  double speed, posn_ang_of_motion;

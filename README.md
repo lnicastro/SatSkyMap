@@ -40,13 +40,14 @@ Usage:
 OPTIONS are:
   -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)
   -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
-  -i sat_intnlname	Single satellite selection via its international designator (region ignored)
+  -i SatIntnlName	Single satellite selection via its international designator (region ignored)
   -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
   -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)
   -n MaxSats		Maximum number of satellites to return (def. 1000)
   -p RA,Dec		J2000 sky coordinates of region to check
   -r radius		Region radius centered at the given coords
-  -s sat_norad_n	Single satellite selection via its NORAD number (region ignored)
+  -s SatNorad_n		Single satellite selection via its NORAD number (region ignored)
+  -S SatName		Satellites selection via string name (substring matching applies; region ignored)
   -t deltaT		Second epoch delta time (seconds; def. 1)
   -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)
 
@@ -94,7 +95,7 @@ Additional computed info:
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -d2020-01-13T12:00:00 -p90.5,-30.3 -r20
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2020-10-10", "version": "0.2d"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-05-04", "version": "0.3a"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -131,7 +132,7 @@ JSON shown in expanded format.
 	"swinfo": {
 		"name": "sat_skymap",
 		"author": "L. Nicastro @ INAF-OAS",
-		"date": "2020-10-10",
+		"date": "2021-05-04",
 		"version": "0.2d"
 	},
 	"geoloc_fields":{
