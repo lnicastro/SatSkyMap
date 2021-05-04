@@ -327,7 +327,7 @@ int main(int argc, char **argv)
 	sat_name[25], tle_path_file[200], opt, *endptr;
   double jd, rho_sin_phi, rho_cos_phi, observer_loc[3], observer_loc2[3],
 	 target_ra, target_dec, target_lon = 0, target_lat = 0;
-  int i, par_pos, status = 0, n_sats_found = 0, n_sats = 0, len_satname = 0;
+  int i, par_pos, status = 0, n_sats_found = 0, n_sats = 0, len_intl_desig = 0, len_satname = 0;
   bool in_region = false;  /* used for single satellite request */
 
 
@@ -429,6 +429,7 @@ int main(int argc, char **argv)
 		break;
           case 'i':
 		strcpy(p.intl_desig, argv[i] + par_pos);
+		len_intl_desig = strlen(p.intl_desig);
 		p.single_sat_i = true;
 		p.altrng_requested = false;  // No altitude filter
 		in_region = false;
@@ -682,7 +683,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 			(atoi( tle.intl_desig) > 57000 ? "19" : "20"),
 			tle.intl_desig, tle.intl_desig + 2);
 
-		if ( !memcmp(intl_desig, p.intl_desig, 12) )
+		if ( !memcmp(intl_desig, p.intl_desig, len_intl_desig) )
 		  single_sat_found = true;
 	} else if ( p.satname_filter ) {
 		if ( memcmp(sat_name, p.satname, len_satname) )
