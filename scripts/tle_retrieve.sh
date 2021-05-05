@@ -8,7 +8,7 @@
 #
 # Edit to match your needs.
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 19/04/2021
+# LN @ INAF-OAS Jan. 2020.  Last change: 05/05/2021
 #--
 
 set +o noclobber
@@ -96,14 +96,14 @@ awk '/ZARYA/ { print ; for(n=0; n<2; n++) { getline ; print } }' stations.txt | 
 awk '/CHEOPS|TESS/ { print ; for(n=0; n<2; n++) { getline ; print } }' active.txt | tr -d '\r' >> special.txt
 
 
-# Add Gaia TLE from 2020 list
-  if [ ! -f $OUTDIR/gaia_2020.txt ]; then
-	echo To have Gaia TLEs move gaia_2020.txt from the scripts to the TLE dir.
+# Add Gaia TLE from 2021 list (see https://github.com/Bill-Gray/tles/ => 13074a21.tle)
+  if [ ! -f $OUTDIR/gaia_2021.txt ]; then
+	echo To have Gaia TLEs move gaia_2021.txt from the scripts to the TLE dir.
   else
 #MJD=`$BINDIR/mjdnow.php | sed -e 's/[^\.]*$//'`  # Remove fractional part
 # Use approx int MJD. See also the C code in src directory.
 	MJD=`expr $(date +%s) / 86400 + 40588`
-	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "Gaia") > 0 ) { print "Gaia"} else { print } } }' gaia_2020.txt >> special.txt
+	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "Gaia") > 0 ) { print "Gaia"} else { print } } }' gaia_2021.txt >> special.txt
   fi
 
 
