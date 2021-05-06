@@ -133,7 +133,7 @@ JSON shown in expanded format.
 		"name": "sat_skymap",
 		"author": "L. Nicastro @ INAF-OAS",
 		"date": "2021-05-04",
-		"version": "0.2d"
+		"version": "0.3a"
 	},
 	"geoloc_fields":{
 		"lat":{
