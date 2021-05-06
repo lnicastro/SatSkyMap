@@ -21,7 +21,7 @@ LDLIBS = $(HPXLIB) $(L) -lm
 DESTLIB = /usr/local/lib
 BINDIR = ${HOME}/bin
 
-VER = v02b_`/bin/date +"%Y%m%d"`
+VER = v03a_`/bin/date +"%Y%m%d"`
 dist = $(LNAME)_$(VER)
 
 
