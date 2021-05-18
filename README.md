@@ -209,6 +209,131 @@ JSON shown in expanded format.
 	"n_sats": 1
 }
 ```
+**Search satellite(s) by (initial) name**
+
+JSON shown in expanded format.
+
+```
+./sat_skymap stations.txt stations.txt -S LEMUR
+
+{
+   "swinfo": {
+	"name": "sat_skymap",
+	"author": "L. Nicastro @ INAF-OAS",
+	"date": "2021-05-04",
+	"version": "0.3a"
+   },
+   "input_params": {
+	"tle_file": "stations.txt",
+	"location":{
+         "lat": -29.2563,
+         "lon": -70.7380,
+         "alt": 2400.0
+	},
+	"region": {
+         "ra": 90.5000,
+         "dec": -30.3000,
+         "radius": 20.0000,
+         "lmst": 14.7803,
+         "az": 222.1309,
+         "alt": -14.4561,
+         "parang": 137.324
+	},
+	"mjd": 58861.50000,
+	"epoch_UTC": "2020-01-13T12:00:00",
+	"gmst": 19.4962,
+	"delta_time_s": 1,
+	"max_sats": 1000,
+	"notes": "All coordinates and radius in degrees. GMST, LMST in hrs."
+   },
+   "sun": {
+	"ra": 294.566,
+	"dec": -21.517,
+	"az": 101.818,
+	"alt": 24.735,
+	"lon": 2.123,
+	"parang": -113.376,
+	"separation_deg": 123.255
+   },
+   "data_fields": {
+	"name": [
+		"RA_start",
+		"Dec_start",
+		"RA_end",
+		"Dec_end",
+		"Distance",
+		"Separation",
+		"PA",
+		"Speed",
+		"HPXID_8"
+	],
+	"desc": [
+		"RA T_ini",
+		"Dec T_ini",
+		"RA T_end",
+		"Dec T_end",
+		"distance to sat.",
+		"angular separation",
+		"position angle",
+		"apparent angular rate of motion",
+		"HEALPix order 8 nested schema ID"
+	],
+	"type": [
+		"double",
+		"double",
+		"double",
+		"double",
+		"double",
+		"float",
+		"float",
+		"float",
+		"int"
+	],
+	"unit": [
+		"deg",
+		"deg",
+		"deg",
+		"deg",
+		"km",
+		"deg",
+		"deg",
+		"arcmin/s",
+		""
+	]
+   },
+   "satellites": [
+ 	{
+		"name": "LEMUR-2-VU",
+		"intl_desig": "2018-046E",
+		"norad_n": 43558,
+		"data": [ 90.0544, 75.2547, 89.9533, 75.2957, 8573.77, 105.5557, 327, 2.904, 126719 ]
+	},
+	{
+		"name": "LEMUR-2-ALEXANDER",
+		"intl_desig": "2018-046F",
+		"norad_n": 43559,
+		"data": [ 351.8948, 17.6476, 351.9209, 17.6085, 9443.62, 265.7559, 147, 2.781, 321031 ]
+	},
+	{
+		"name": "LEMUR-2-YUASA",
+		"intl_desig": "2018-046G",
+		"norad_n": 43560,
+		"data": [ 85.0062, 8.0375, 85.0374, 8.0723, 9532.90, 38.7291, 41, 2.792, 379090 ]
+	},
+	{
+		"name": "LEMUR-2-TOMHENDERSON",
+		"intl_desig": "2018-046H",
+		"norad_n": 43561,
+		"data": [ 77.0633, 0.0105, 77.0993, 0.0394, 9723.66, 33.1553, 51, 2.772, 366949 ]
+	}
+   ],
+   "status": 0,
+   "errmsg": "",
+   "n_sats_found": 4,
+   "n_sats": 4
+}
+```
+
 
 ## Acknowledgements
 Parts of the code from [Project Pluto](https://www.projectpluto.com/), Bill Gray's `sat_code` on [GitHub](https://github.com/Bill-Gray/sat_code).

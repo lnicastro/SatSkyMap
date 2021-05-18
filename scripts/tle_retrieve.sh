@@ -8,7 +8,7 @@
 #
 # Edit to match your needs.
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 05/05/2021
+# LN @ INAF-OAS Jan. 2020.  Last change: 18/05/2021
 #--
 
 set +o noclobber
@@ -32,7 +32,7 @@ fi
 cd $OUTDIR
 
 # List of most relevant TLE files
-tles=( tle-new stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos planet spire geo intelsat ses iridium iridium-NEXT starlink orbcomm globalstar amateur x-comm other-comm satnogs gorizont raduga molniya  gps-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other )
+tles=( tle-new stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos planet spire geo intelsat ses iridium iridium-NEXT oneweb starlink orbcomm globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other )
 
 date | tee $LOGFILE
 

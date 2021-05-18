@@ -12,5 +12,9 @@
 
 2021-04-20 LN, ver. 0.3a
 	- Added searching satellites by name substring
-	- Code change/cleaning in mjdnow.c, mjd2date.c  and README updated
+	- Code change/cleaning in mjdnow.c, mjd2date.c and README updated
 	- .gitignore updated
+
+2021-04-20 LN, ver. 0.3a
+	- tle_retrieve.sh updated to include additional CelesTrak collections
+	- README updated
