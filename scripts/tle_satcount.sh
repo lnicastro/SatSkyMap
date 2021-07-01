@@ -1,10 +1,10 @@
 #!/bin/bash
 # 
-# Count and log the number of satellites from the SpaceTrack retrived TLE data
+# Count and log the number of satellites from the SpaceTrack retrieved TLE data
 #
-# Edit to match your needs.
+# Edit to match your needs. On MacoS "sed" needs to be raplaced with "gsed" (gnu-sed) to work.
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 28/04/2020
+# LN @ INAF-OAS Jan. 2020.  Last change: 01/07/2021
 #--
 
 set +o noclobber
@@ -32,12 +32,24 @@ cd $TLEDIR
 rm -f $OUTFILE $OUTFILE_DEB $OUTFILE_NORAD
 
 # List of most relevant TLE files, excluding debris
-tles=( tle-new stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos planet spire geo intelsat ses iridium iridium-NEXT starlink orbcomm globalstar amateur x-comm other-comm satnogs gorizont raduga molniya gps-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other gpz gpz-plus )
+#tlesmain=( tle-new stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos planet spire geo intelsat ses iridium iridium-NEXT starlink orbcomm globalstar amateur x-comm other-comm satnogs gorizont raduga molniya gps-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other gpz gpz-plus )
+tlesmain=( tle-new stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos spire geo iridium iridium-NEXT globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other gpz gpz-plus )
+
+# Supplemental TLE files (not that gps is renamed to gps-ops)
+tlessupp=( glonass intelsat oneweb orbcomm planet ses starlink transporter-2 meteosat telesat iss cpf )
 
 # List of Debris TLE files
 tlesdeb=( 2019-006 1999-025 iridium-33-debris cosmos-2251-debris )
 
-for TLE_NAME in "${tles[@]}"
+for TLE_NAME in "${tlesmain[@]}"
+do
+	TLE=$TLE_NAME".txt"
+	wc -l $TLE | awk '{print substr($2, 0, index($2, ".")-1)" "$1/3}' | tee -a $OUTFILE
+
+	sed -n 3~3p $TLE | cut -d " " -f 2 >> ${OUTFILE_NORAD}_tmp
+done
+
+for TLE_NAME in "${tlessupp[@]}"
 do
 	TLE=$TLE_NAME".txt"
 	wc -l $TLE | awk '{print substr($2, 0, index($2, ".")-1)" "$1/3}' | tee -a $OUTFILE

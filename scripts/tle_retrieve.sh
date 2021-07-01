@@ -8,7 +8,7 @@
 #
 # Edit to match your needs.
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 18/05/2021
+# LN @ INAF-OAS Jan. 2020.  Last change: 01/07/2021
 #--
 
 set +o noclobber
@@ -32,17 +32,17 @@ fi
 cd $OUTDIR
 
 # List of most relevant TLE files
-tles=( tle-new stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos planet spire geo intelsat ses iridium iridium-NEXT oneweb starlink orbcomm globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other )
+tlesmain=( tle-new stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos spire geo iridium iridium-NEXT globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other )
 
 date | tee $LOGFILE
 
-for TLE_NAME in "${tles[@]}"
+for TLE_NAME in "${tlesmain[@]}"
 do
 	echo -n "===> $TLE_NAME ..." | tee -a $LOGFILE
 
 	TLE=$TLE_NAME".txt"
 	#curl -s -O --max-time $TIME "$URL$TLE"
-	if [ `curl -s -w '%{http_code}' -o $TMPFILE --max-time $TIME "$URL$TLE"` -eq 200 ]; then  # Check for success code
+	if [ `curl -s -w '%{http_code}' -o $TMPFILE --max-time $TIME $URL$TLE` -eq 200 ]; then  # Check for success code
 		mv $TMPFILE $TLE
 		echo retrieved. | tee -a $LOGFILE
 	else
@@ -50,6 +50,32 @@ do
 	fi
 
 done
+
+
+# Supplemental TLE files (see https://celestrak.com/NORAD/elements/supplemental/).
+# Previewsly in the main list: gps (as "gps-ops"), intelsat, oneweb, orbcomm, planet, ses, starlink
+# Note: multiple entries marking pre and post-maneuver [PM] TLEs (e.g. for intelsat) are not yet managed.
+#       iss.txt not used (it reports "segments").
+tlessupp=( glonass gps intelsat oneweb orbcomm planet ses starlink transporter-2 meteosat telesat iss cpf )
+
+for TLE_NAME in "${tlessupp[@]}"
+do
+	echo -n "===> $TLE_NAME ..." | tee -a $LOGFILE
+
+	TLE=$TLE_NAME".txt"
+	if [ `curl -s -w '%{http_code}' -o $TMPFILE --max-time $TIME $URL"supplemental/"$TLE` -eq 200 ]; then
+		mv $TMPFILE $TLE
+		echo retrieved. | tee -a $LOGFILE
+	else
+		echo Retrieval failed. | tee -a $LOGFILE
+	fi
+
+done
+
+# Patch for gps file name mismatch
+if [ -f gps.txt ]; then
+	mv gps.txt gps-ops.txt
+fi
 
 
 # List of Debris TLE files
@@ -60,7 +86,7 @@ do
 	echo -n "===> $TLE_NAME ..." | tee -a $LOGFILE
 
 	TLE=$TLE_NAME".txt"
-	if [ `curl -s -w '%{http_code}' -o $TMPFILE --max-time $TIME "$URL$TLE"` -eq 200 ]; then
+	if [ `curl -s -w '%{http_code}' -o $TMPFILE --max-time $TIME $URL$TLE` -eq 200 ]; then
 		mv $TMPFILE $TLE
 		echo retrieved. | tee -a $LOGFILE
 	else
