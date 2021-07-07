@@ -30,5 +30,8 @@ HealpixC/*.a
 src/sat_skymap
 src/mjdnow
 
+# The development dir
+dev
+
 # More stuff
 .DS_Store

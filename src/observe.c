@@ -100,7 +100,7 @@ void DLL_FUNC get_satellite_ra_dec_delta( const double *observer_loc,
    *delta = sqrt( dist2);
    *ra = atan2( vect[1], vect[0]);
    if( *ra < 0.)
-      *ra += PI + PI;
+      *ra += TWOPI;
    *dec = asin( vect[2] / *delta);
 }
 

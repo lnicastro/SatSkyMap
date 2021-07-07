@@ -95,18 +95,18 @@ Additional computed info:
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -d2020-01-13T12:00:00 -p90.5,-30.3 -r20
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-05-04", "version": "0.3a"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-07-06", "version": "0.3b"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
     "notes": "All coordinates and radius in degrees. GMST, LMST in hrs."},
   "sun": {"ra":294.566, "dec":-21.517, "az": 101.818, "alt": 24.735, "lon":   2.123, "parang":-113.376, "separation_deg":123.255},
-  "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
-    "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
-    "type": ["double", "double", "double", "double", "double", "float", "float", "float", "int"],
+  "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "in_sunlight", "HPXID_8"],
+    "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "sat. in sunlight flag", "HEALPix order 8 nested schema ID"],
+    "type": ["double", "double", "double", "double", "double", "float", "float", "float", "int", "int"],
     "unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", ""]},
   "satellites": [{"name": "STARLINK-23", "intl_desig": "1919-029C ", "norad_n": 44237,
-    "data": [ 77.5770, -17.4894,  77.6262, -17.4900,   7660.9,18.1955,  90,  2.818,339078]},
+    "data": [ 77.5770, -17.4894,  77.6262, -17.4900,   7660.9,18.1955,  90,  2.818,1,339078]},
 
   { ... }
 
@@ -115,10 +115,11 @@ Additional computed info:
   }
 ```
 It is:
--  Distance: distance to satellite in *km*,
--  Separation: angular separation from the search point in *degrees*,
--  PA: position angle of motion in *degrees*,
--  Speed: apparent angular rate of motion in *arcminutes/second* (== *degrees/minute*),
+-  Distance: distance to satellite in *km*
+-  Separation: angular separation from the search point in *degrees*
+-  PA: position angle of motion in *degrees*
+-  Speed: apparent angular rate of motion in *arcminutes/second* (== *degrees/minute*)
+-  in_sunlight: *0* => in Earth shade, *1* => in sunlight (preliminary; work in progress)
 -  HPXID_8: HEALPix order 8 nested schema ID
 
 
@@ -132,8 +133,8 @@ JSON shown in expanded format.
 	"swinfo": {
 		"name": "sat_skymap",
 		"author": "L. Nicastro @ INAF-OAS",
-		"date": "2021-05-04",
-		"version": "0.3a"
+		"date": "2021-07-06",
+		"version": "0.3b"
 	},
 	"geoloc_fields":{
 		"lat":{
@@ -186,10 +187,10 @@ JSON shown in expanded format.
 		"separation_deg": 37.974
 	},
 	"data_fields": {
-		"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
-		"desc": ["RA T_ini", "Dec T_ini", "RA T_end", "Dec T_end", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
-		"type": ["double", "double", "double", "double", "double", "float", "float", "float", "int"],
-		"unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", ""]
+		"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "in_sunlight", "HPXID_8"],
+		"desc": ["RA T_ini", "Dec T_ini", "RA T_end", "Dec T_end", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "sat. in sunlight flag", "HEALPix order 8 nested schema ID"],
+		"type": ["double", "double", "double", "double", "double", "float", "float", "float", "int", "int"],
+		"unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", "", ""]
 	},
 	"satellites": [{
 		"name": "ISS (ZARYA)",
@@ -201,7 +202,7 @@ JSON shown in expanded format.
 			"alt": 433.24,
 			"theta": 143.706
 		},
-		"data": [185.2172, -53.2256, 185.2753, -53.2252, 11436.45, 149.1219, 89, 2.087, 690893]
+		"data": [185.2172, -53.2256, 185.2753, -53.2252, 11436.45, 149.1219, 89, 2.087, 0, 690893]
 	}],
 	"status": 0,
 	"errmsg": "",
@@ -220,8 +221,8 @@ JSON shown in expanded format.
    "swinfo": {
 	"name": "sat_skymap",
 	"author": "L. Nicastro @ INAF-OAS",
-	"date": "2021-05-04",
-	"version": "0.3a"
+	"date": "2021-07-06",
+	"version": "0.3b"
    },
    "input_params": {
 	"tle_file": "stations.txt",
@@ -265,6 +266,7 @@ JSON shown in expanded format.
 		"Separation",
 		"PA",
 		"Speed",
+		"in_sunlight",
 		"HPXID_8"
 	],
 	"desc": [
@@ -276,6 +278,7 @@ JSON shown in expanded format.
 		"angular separation",
 		"position angle",
 		"apparent angular rate of motion",
+		"sat. in sunlight flag",
 		"HEALPix order 8 nested schema ID"
 	],
 	"type": [
@@ -288,6 +291,7 @@ JSON shown in expanded format.
 		"float",
 		"float",
 		"int"
+		"int"
 	],
 	"unit": [
 		"deg",
@@ -299,6 +303,7 @@ JSON shown in expanded format.
 		"deg",
 		"arcmin/s",
 		""
+		""
 	]
    },
    "satellites": [
@@ -306,25 +311,25 @@ JSON shown in expanded format.
 		"name": "LEMUR-2-VU",
 		"intl_desig": "2018-046E",
 		"norad_n": 43558,
-		"data": [ 90.0544, 75.2547, 89.9533, 75.2957, 8573.77, 105.5557, 327, 2.904, 126719 ]
+		"data": [ 90.0544, 75.2547, 89.9533, 75.2957, 8573.77, 105.5557, 327, 2.904, 1, 126719 ]
 	},
 	{
 		"name": "LEMUR-2-ALEXANDER",
 		"intl_desig": "2018-046F",
 		"norad_n": 43559,
-		"data": [ 351.8948, 17.6476, 351.9209, 17.6085, 9443.62, 265.7559, 147, 2.781, 321031 ]
+		"data": [ 351.8948, 17.6476, 351.9209, 17.6085, 9443.62, 265.7559, 147, 2.781, 0, 321031 ]
 	},
 	{
 		"name": "LEMUR-2-YUASA",
 		"intl_desig": "2018-046G",
 		"norad_n": 43560,
-		"data": [ 85.0062, 8.0375, 85.0374, 8.0723, 9532.90, 38.7291, 41, 2.792, 379090 ]
+		"data": [ 85.0062, 8.0375, 85.0374, 8.0723, 9532.90, 38.7291, 41, 2.792, 0, 379090 ]
 	},
 	{
 		"name": "LEMUR-2-TOMHENDERSON",
 		"intl_desig": "2018-046H",
 		"norad_n": 43561,
-		"data": [ 77.0633, 0.0105, 77.0993, 0.0394, 9723.66, 33.1553, 51, 2.772, 366949 ]
+		"data": [ 77.0633, 0.0105, 77.0993, 0.0394, 9723.66, 33.1553, 51, 2.772, 0, 366949 ]
 	}
    ],
    "status": 0,

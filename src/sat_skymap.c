@@ -56,18 +56,18 @@
   The output looks like this:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-05-04", "version": "0.3a"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-07-06", "version": "0.3b"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
     "notes": "All coordinates and radius in degrees. GMST, LMST in hrs."},
   "sun": {"ra":294.566, "dec":-21.517, "az": 101.818, "alt": 24.735, "lon":   2.123, "parang":-113.376, "separation_deg":123.255},
-  "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "HPXID_8"],
-    "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "HEALPix order 8 nested schema ID"],
-    "type": ["double", "double", "double", "double", "double", "float", "float", "float", "int"],
-    "unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", ""]},
+  "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "in_sunlight", "HPXID_8"],
+    "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "sat. in sunlight flag", "HEALPix order 8 nested schema ID"],
+    "type": ["double", "double", "double", "double", "double", "float", "float", "float", "int", "int"],
+    "unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", "", ""]},
   "satellites": [{"name": "STARLINK-23", "intl_desig": "1919-029C ", "norad_n": 44237,
-    "data": [ 77.5770, -17.4894,  77.6262, -17.4900,   7660.9,18.1955,  90,  2.818,339078]},
+    "data": [ 77.5770, -17.4894,  77.6262, -17.4900,   7660.9,18.1955,  90,  2.818,1,339078]},
 
   { ... }
 
@@ -76,10 +76,11 @@
   }
 
   Where:
-    Distance: distance to satellite in km,
-    Separation: angular separation in degrees from the search point,
-    PA: position angle of motion,
-    Speed: apparent angular rate of motion in arcminutes/second (or degrees/minute),
+    Distance: distance to satellite in km
+    Separation: angular separation in degrees from the search point
+    PA: position angle of motion
+    Speed: apparent angular rate of motion in arcminutes/second (or degrees/minute)
+    in_sunlight: 0 => in Earth shade, 1 => in sunlight (preliminary; work in progress)
     HPXID_8: HEALPix order 8 nested schema ID
 
   Example (ISS position):
@@ -88,7 +89,7 @@
   Output:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-05-04", "version": "0.3a"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-07-06", "version": "0.3b"},
   "geoloc_fields": {"lat": {"desc": "Geodetic Latitude", "unit": "deg"}, "lon": {"desc": "Geodetic Longitude", "unit": "deg"}, "alt": {"desc": "Geodetic Altitude", "unit": "km"}, "theta": {"desc": "Equatorial angle (Lon + GMST = RA)", "unit": "deg"}},
   "input_params": {"tle_file": "stations.txt", "location": {"lat": 44.5280, "lon":  11.3371, "alt":    23.5},
     "region": {"ra":  51.2026, "dec": 44.5280, "radius": 20.0000, "lmst":  3.4135, "az":   0.0000, "alt": 90.0000, "parang": 180.000},
@@ -106,7 +107,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 04/05/2021
+  LN @ INAF-OAS, Jan 2020.  Last change: 06/07/2021
 */
 
 #include <ctype.h>
@@ -122,55 +123,20 @@
 #include "chealpix.h"
 #include "sat_skymap_def.h"
 
-  typedef struct myParams {
-	  char *tle_file_name,
-		date[24],
-		intl_desig[12],
-		satname[24];
-	 double lat,
-		lon,
-		ht_in_meters,
-		ra_deg,
-		de_deg,
-		search_radius,
-		az,
-		alt,
-		parang,
-		gmst,
-		lmst,
-		mjd,
-		alt_min,
-		alt_max;
-	    int delta_time,
-		max_sats,
-		norad_n;
-	   bool haversine,
-		info_only,
-		single_sat_i,
-		single_sat_n,
-		satname_filter,
-		geoloc_requested,
-		geoloc_reference,
-		altrng_requested,
-		use_deftledir;
-  } Params;
 
-  typedef struct mySun {
-	double ra,
-		dec,
-		az,
-		alt,
-		parang,
-		lon,
-		sep;
-  } Sun;
+/*
+  From Spherical coords in radians (e.g. RA, Dec) to unit vector
+*/
 
-  typedef struct myGeoloc {
-	 double lon,
-		lat,
-		alt,
-		theta;
-  } Geoloc;
+void sphrad2v(const double rarad, const double decrad, double v[3])
+{
+  double cosd = cos(decrad);
+
+  v[0] = cos(rarad) * cosd;
+  v[1] = sin(rarad) * cosd;
+  v[2] = sin(decrad);
+}
+
 
 /*
   Trim trailing space
@@ -185,6 +151,7 @@ char *trimend(char *str)
 
   return str;
 }
+
 
 void Usage() {
   printf("Usage:\n  %s tle_file [OPTIONS]\n\n"
@@ -239,10 +206,10 @@ void add_sundata_json(Sun sun) {
 
 void add_fieldsdesc_json() {
   printf(
-    "\"data_fields\": {\"name\": [\"RA_start\", \"Dec_start\", \"RA_end\", \"Dec_end\", \"Distance\", \"Separation\", \"PA\", \"Speed\", \"HPXID_8\"], "
-    "\"desc\": [\"RA T_ini\", \"Dec T_ini\", \"RA T_end\", \"Dec T_end\", \"distance to sat.\", \"angular separation\", \"position angle\", \"apparent angular rate of motion\", \"HEALPix order 8 nested schema ID\"], "
-    "\"type\": [\"double\", \"double\", \"double\", \"double\", \"double\", \"float\", \"float\", \"float\", \"int\"], "
-    "\"unit\": [\"deg\", \"deg\", \"deg\", \"deg\", \"km\", \"deg\", \"deg\", \"arcmin/s\", \"\"]},");
+    "\"data_fields\": {\"name\": [\"RA_start\", \"Dec_start\", \"RA_end\", \"Dec_end\", \"Distance\", \"Separation\", \"PA\", \"Speed\", \"in_sunlight\", \"HPXID_8\"], "
+    "\"desc\": [\"RA T_ini\", \"Dec T_ini\", \"RA T_end\", \"Dec T_end\", \"distance to sat.\", \"angular separation\", \"position angle\", \"apparent angular rate of motion\", \"sat. in sunlight flag\", \"HEALPix order 8 nested schema ID\"], "
+    "\"type\": [\"double\", \"double\", \"double\", \"double\", \"double\", \"float\", \"float\", \"float\", \"int\", \"int\"], "
+    "\"unit\": [\"deg\", \"deg\", \"deg\", \"deg\", \"km\", \"deg\", \"deg\", \"arcmin/s\", \"\", \"\"]},");
 }
 
 void add_geofieldsdesc_json() {
@@ -254,7 +221,6 @@ void add_geofieldsdesc_json() {
 	"\"theta\": {\"desc\": \"Equatorial angle (Lon + GMST = RA)\", \"unit\": \"deg\"}"
     "}, ");
 }
-
 
 void add_satlatlon_json(Geoloc geo) {
     printf( "\"geoloc\": {\"lat\":%7.3lf, \"lon\":%7.3lf, \"alt\":%9.2lf, \"theta\":%8.3lf}, ", geo.lat, geo.lon, geo.alt, geo.theta);
@@ -286,14 +252,56 @@ static inline double myThetaG(double jd)
 */
 
 
+/* Compute intesection points distance on Earth of the Satellite --> Sun connecting line.
+   Set to 0, 0 (and 0 returned) if Earth not intercepted (satellite is illuminated).
+
+   See http://paulbourke.net/geometry/circlesphere/index.html#linesphere
+   and intersect_line_and_sphere in SkyField python package. 
+*/
+int intersect_satsun_sphere(double *satpos, double *sunpos, double *eray)
+{
+  int i;
+  double center[3], endpoint[3], l_endpoint = 0., minus_b = 0., c = 0., discriminant;
+
+  for (i = 0; i < 3; i++) {
+	center[i] = -satpos[i];
+	endpoint[i] = sunpos[i] - satpos[i];
+
+	c += center[i] * center[i];
+	l_endpoint += endpoint[i] * endpoint[i];
+  }
+
+  c -= ERAD * ERAD;
+  l_endpoint = sqrt(l_endpoint);
+
+  for (i = 0; i < 3; i++)
+	minus_b += endpoint[i]/l_endpoint * center[i];
+
+  minus_b *= 2;
+
+  discriminant = minus_b * minus_b - 4 * c;
+
+  if ( discriminant < 0. ) {
+	eray[0] = 0;
+	eray[1] = 0;
+	return(0);
+  }
+
+  double dsqrt = sqrt(discriminant);
+
+  eray[0] = (minus_b - dsqrt) / 2.;
+  eray[1] = (minus_b + dsqrt) / 2.;
+
+  return(1);
+}
+
+
+
 /* Compute satellite geodetic Lon, Lat, Alt and theta (RA) position given its ECI position and GMST.
    Returned values are deg, deg, km, deg.
 */
 void sat_geoLocation(double gmst, double *pos,  Geoloc *geo) {
   double r, e2, phi, sinphi, c;
-  const double ERAD = 6.3781366e3;        /* IERS Conventions (2003) Earth radius km */
-  const double F = 3.352819697896193e-3;  /* IERS Conventions (2003) Earth ellipsoid flattening factor */
-				 	  /* Note: in "predict" it is 3.35281066474748E-3 */ 
 
   geo->theta = atan2(pos[1], pos[0]) * RAD2DEG;  /* degrees */
   geo->lon = (geo->theta - gmst * 15.);
@@ -540,7 +548,7 @@ int main(int argc, char **argv)
 /* A buffer to save satellite names and check for duplications in the various tle files */
   const int max_satbuff = 70000, extra_satbuff = 10000;
   int use_bufflen = 0, cur_bufflen = max_satbuff;
-  double hareg, hasun;
+  double hareg;
   char *sbuff, *tle_file_name;
   bool single_sat = false, single_sat_found = false, read_tle_list = true;
 
@@ -592,13 +600,21 @@ int main(int argc, char **argv)
 /* Lon in [0, 360[ deg +W */
   sun.lon = fmod(p.gmst * 15. + 360. - sun.ra * RAD2DEG, 360.);
  
-  hasun = p.lmst - sun.ra * RAD2HRS;
-  dechalat2alt(sun.dec, hasun, p.lat, &sun.alt, &sun.az, &sun.parang);
+  sun.ha = p.lmst - sun.ra * RAD2HRS;
+  dechalat2alt(sun.dec, sun.ha, p.lat, &sun.alt, &sun.az, &sun.parang);
 
   if ( p.geoloc_reference )
     sun.sep = skysep_h(target_lon, target_lat, sun.lon*DEG2RAD, sun.dec);
   else
     sun.sep = skysep_h(target_ra, target_dec, sun.ra, sun.dec);
+
+
+/* Sun cartesian coordinates (in km) */ 
+  sphrad2v(sun.ra, sun.dec, sun.d_km);
+
+  for (int i = 0; i < 3; i++)
+	sun.d_km[i] *= AU_KM;
+
 
   sun.ra *= RAD2DEG;
   sun.dec *= RAD2DEG;
@@ -613,7 +629,7 @@ int main(int argc, char **argv)
 printf("JD %lf \n", jd);
 printf("Region HA, LMST, AZ, Alt, PA: %lf %lf %lf %lf %lf (h, deg, deg, deg)\n", hareg, p.lmst, p.az, p.alt, p.parang);
 printf("Sun RA, Dec, sep: %lf %lf  %lf  %lf (deg)\n", sun.ra, sun.dec, sun.lon, sun.sep);
-printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.az, sun.alt, sun.parang);
+printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.az, sun.alt, sun.parang);
 #endif
   add_sundata_json(sun);
 
@@ -712,7 +728,8 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 		use_bufflen += 6;
 	}
 
-	int is_deep = select_ephemeris(&tle);
+	int is_deep = select_ephemeris(&tle),
+	    is_in_sunlight;
 //printf("is_deep: %d\n", is_deep);
 	double sat_params[N_SAT_PARAMS], ang_sep, ang_sep1, d_ra, d_dec,
 		ra, dec, ra1, dec1, sep_to_satellite, t_since,
@@ -801,7 +818,11 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 		p.satname_filter ||
 		ang_sep <= p.search_radius || ang_sep1 <= p.search_radius ) {  /* good enough */
 	  line1[16] = '\0';
-	  double speed, posn_ang_of_motion;
+	  double speed, posn_ang_of_motion, eray[2];
+
+/* If satellite is in Sun light (this is preliminary. TODO to account for Sun angular size) */
+	  is_in_sunlight = ! intersect_satsun_sphere(pos, sun.d_km, eray);
+//printf("\n\n%s to Sun ray intersect Earth at %lf  %lf\n\n", sat_name, eray[0], eray[1]);
 
 	  if ( !p.single_sat_i ) {
 		if ( tle.intl_desig[0] != ' ' )
@@ -839,10 +860,10 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", hasun, sun.a
 		if ( p.geoloc_requested )
 			add_satlatlon_json(geo);
 
-		printf("\"data\": [%8.4lf,%8.4lf,%8.4lf,%8.4lf,%9.2lf,%6.4lf,%3d,%6.3lf,%ld]}",
+		printf("\"data\": [%8.4lf,%8.4lf,%8.4lf,%8.4lf,%9.2lf,%6.4lf,%3d,%6.3lf,%d,%ld]}",
 			ra * RAD2DEG, dec * RAD2DEG, ra1 * RAD2DEG, dec1 * RAD2DEG,
 			sep_to_satellite, ang_sep,
-			(int)(posn_ang_of_motion * RAD2DEG), speed, id8nest);
+			(int)(posn_ang_of_motion * RAD2DEG), speed, is_in_sunlight, id8nest);
 /* Speed is displayed in arcminutes/second (== degrees/minute) */
 	  }
 	  n_sats_found++;

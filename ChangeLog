@@ -22,3 +22,7 @@
 2021-07-01 LN, ver. 0.3a
 	- tle_retrieve.sh and tle_satcount.sh updated to include the Supplemental CelesTrak collections
 	- https://sats.oas.inaf.it/ PHP code changed accordingly
+
+2021-07-06 LN, ver. 0.3b
+	- Added (approx) computation of satellite --> Sun line intersection with Earth (sat. in sunlight?) 
+	- Minor code rearrangements in sat_skymap.c and sat_skymap_def.h
