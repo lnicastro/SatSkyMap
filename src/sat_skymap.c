@@ -107,7 +107,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 06/07/2021
+  LN @ INAF-OAS, Jan 2020.  Last change: 07/07/2021
 */
 
 #include <ctype.h>
@@ -291,6 +291,9 @@ int intersect_satsun_sphere(double *satpos, double *sunpos, double *eray)
 
   eray[0] = (minus_b - dsqrt) / 2.;
   eray[1] = (minus_b + dsqrt) / 2.;
+
+  if ( eray[1] < 0 )
+	return(0);
 
   return(1);
 }
@@ -822,7 +825,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 
 /* If satellite is in Sun light (this is preliminary. TODO to account for Sun angular size) */
 	  is_in_sunlight = ! intersect_satsun_sphere(pos, sun.d_km, eray);
-//printf("\n\n%s to Sun ray intersect Earth at %lf  %lf\n\n", sat_name, eray[0], eray[1]);
+printf("\n\n%s to Sun ray intersect Earth at %lf  %lf\n\n", sat_name, eray[0], eray[1]);
 
 	  if ( !p.single_sat_i ) {
 		if ( tle.intl_desig[0] != ' ' )
