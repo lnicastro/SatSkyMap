@@ -825,7 +825,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 
 /* If satellite is in Sun light (this is preliminary. TODO to account for Sun angular size) */
 	  is_in_sunlight = ! intersect_satsun_sphere(pos, sun.d_km, eray);
-printf("\n\n%s to Sun ray intersect Earth at %lf  %lf\n\n", sat_name, eray[0], eray[1]);
+//printf("\n\n%s to Sun ray intersect Earth at %lf  %lf\n\n", sat_name, eray[0], eray[1]);
 
 	  if ( !p.single_sat_i ) {
 		if ( tle.intl_desig[0] != ' ' )
