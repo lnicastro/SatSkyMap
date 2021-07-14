@@ -1,7 +1,7 @@
 /*
    Definitions for sat_skymap
   
-   LN @ INAF-OAS, Feb 2020                      Last change: 07/07/2021
+   LN @ INAF-OAS, Feb 2020                      Last change: 14/07/2021
 */
 
 #ifndef SAT_SKYMAP_DEF_H
@@ -18,8 +18,8 @@ const double AU_KM = 149597870.700;
 
 const char *progname = "sat_skymap",
 	*progauthor = "L. Nicastro @ INAF-OAS",
-       	*progdate = "2021-07-06",
-       	*progversion = "0.3b";
+       	*progdate = "2021-07-14",
+       	*progversion = "0.3c";
 
   typedef struct myParams {
 	  char *tle_file_name,
@@ -45,6 +45,7 @@ const char *progname = "sat_skymap",
 		norad_n;
 	   bool haversine,
 		info_only,
+		in_sunlight_only,
 		single_sat_i,
 		single_sat_n,
 		satname_filter,

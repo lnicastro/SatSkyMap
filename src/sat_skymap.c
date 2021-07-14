@@ -14,6 +14,7 @@
   Input Parameters:
     -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)
     -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
+    -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)
     -i SatIntnlName	Single satellite selection via its international designator (region ignored)
     -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
     -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)
@@ -23,7 +24,6 @@
     -s SatNorad_n	Single satellite selection via its NORAD number (region ignored)
     -S SatName		Satellites selection via string name (substring matching applies; region ignored)
     -t deltaT		Second epoch delta time (seconds; def. 1)
-    -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)
 
   Switches:
     -h			print this help
@@ -33,6 +33,7 @@
     -I			Only information about the returned data and number of satellites found
   			('satellites' object not returned)
     -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h) 
+    -V			Return data only for satellites in sunlight (potentially visible)
 
   Output:
     A json string with information about the satellites in the FoV (see below).
@@ -72,7 +73,7 @@
   { ... }
 
   }],
-  "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6
+  "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6, "n_sats_in_sunlight": 6
   }
 
   Where:
@@ -103,11 +104,11 @@
   "satellites": [{"name": "ISS (ZARYA)", "intl_desig": "1998-067A ", "norad_n": 25544,
     "geoloc": {"lat":-44.174, "lon":103.841, "alt":   433.24, "theta": 143.706},
     "data": [185.2172,-53.2256,185.2753,-53.2252, 11436.45,149.1219, 89, 2.087,690893]}],
-  "status": 0, "errmsg": "", "n_sats_found": 1, "n_sats": 1
+  "status": 0, "errmsg": "", "n_sats_found": 1, "n_sats": 1, "n_sats_in_sunlight": 0
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 07/07/2021
+  LN @ INAF-OAS, Jan 2020.  Last change: 14/07/2021
 */
 
 #include <ctype.h>
@@ -158,6 +159,7 @@ void Usage() {
   "OPTIONS are:\n"
   "  -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)\n"
   "  -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])\n"
+  "  -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)\n\n"
   "  -i SatIntnlName	Single satellite selection via its international designator (region ignored)\n"
   "  -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)\n"
   "  -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)\n"
@@ -167,15 +169,15 @@ void Usage() {
   "  -s SatNorad_n	Single satellite selection via its NORAD number (region ignored)\n"
   "  -S SatName		Satellites selection via string name (substring matching applies; region ignored)\n"
   "  -t deltaT		Second epoch delta time (seconds; def. 1)\n"
-  "  -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)\n\n"
   "\nSwitches:\n"
   "  -h			print this help\n"
   "  -E			Use input geodetic location as reference location for region (-G by def.; -p ignored) \n"
   "  -G			Compute (and return) geodetic location for each satellite\n"
   "  -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested!)\n"
   "  -I			Only information about the returned data and number of satellites found\n"
-  " 			('satellites' object not returned)\n\n"
+  " 			('satellites' object not returned)\n"
   "  -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h)\n"
+  "  -V			Return data only for satellites in sunlight (visible)\n\n"
 
   "Example usage:\n"
   "  %s default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20\n"
@@ -226,9 +228,9 @@ void add_satlatlon_json(Geoloc geo) {
     printf( "\"geoloc\": {\"lat\":%7.3lf, \"lon\":%7.3lf, \"alt\":%9.2lf, \"theta\":%8.3lf}, ", geo.lat, geo.lon, geo.alt, geo.theta);
 }
 
-void close_stat_json(int status, char *errmsg, int n_sats_found, int n_sats) {
-  printf(" \"status\": %d, \"errmsg\": \"%s\", \"n_sats_found\": %d, \"n_sats\": %d"
-	"}\n", status, errmsg, n_sats_found, n_sats);
+void close_stat_json(int status, char *errmsg, int n_sats_found, int n_sats, int n_sats_in_sunlight) {
+  printf(" \"status\": %d, \"errmsg\": \"%s\", \"n_sats_found\": %d, \"n_sats\": %d,"
+	 " \"n_sats_in_sunlight\": %d}\n", status, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 }
 
 
@@ -338,14 +340,15 @@ int main(int argc, char **argv)
 	sat_name[25], tle_path_file[200], opt, *endptr;
   double jd, rho_sin_phi, rho_cos_phi, observer_loc[3], observer_loc2[3],
 	 target_ra, target_dec, target_lon = 0, target_lat = 0;
-  int i, par_pos, status = 0, n_sats_found = 0, n_sats = 0, len_intl_desig = 0, len_satname = 0;
+  int i, par_pos, status = 0, n_sats_found = 0, n_sats = 0, n_sats_in_sunlight = 0,
+	 len_intl_desig = 0, len_satname = 0;
   bool in_region = false;  /* used for single satellite request */
 
 
   if ( argc < 2 ) {
 	open_json();
 	sprintf(errmsg, "Example usage:\n %s default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20", progname);
- 	close_stat_json(1, errmsg, n_sats_found, n_sats);
+ 	close_stat_json(1, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 	exit(0);
   }
 
@@ -373,6 +376,7 @@ int main(int argc, char **argv)
 				rather than RA, Dec. If true, p.geoloc_requested is also set to true. */ 
   p.use_deftledir = false;  /* If default directory with TLE files should be used (def. ./) */
   p.altrng_requested = false;  /* If altitude range filter requested */
+  p.in_sunlight_only = false;  /* If only data for illuminated satellites requested */
   p.intl_desig[0] = '\0';
   p.satname[0] = '\0';
   p.norad_n = 0;
@@ -418,6 +422,10 @@ int main(int argc, char **argv)
 		p.use_deftledir = true;
 		i--;
 		break;
+ 	  case 'V':
+		p.in_sunlight_only = true;
+		i--;
+		break;
 
 	  /* Parameters */
           case 'a':
@@ -457,7 +465,7 @@ int main(int argc, char **argv)
 		if ( p.lat < -90. || p.lat > 90. )  {
 		  open_json();
 		  sprintf(errmsg, "Latitude must be in the range [-90, +90] degrees. Read '%lf'", p.lat);
-  		  close_stat_json(-1, errmsg, n_sats_found, n_sats);
+  		  close_stat_json(-1, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 		  exit(-1);
 		}
 		break;
@@ -469,13 +477,13 @@ int main(int argc, char **argv)
 		if ( p.ra_deg < 0. || p.ra_deg > 360. )  {
 		  open_json();
 		  sprintf(errmsg, "RA must be in the range [0, 360[ degrees. Read '%lf'", p.ra_deg);
-  		  close_stat_json(-1, errmsg, n_sats_found, n_sats);
+  		  close_stat_json(-1, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 		  exit(-1);
 		}
 		if ( p.de_deg < -90. || p.de_deg > 90. )  {
 		  open_json();
 		  sprintf(errmsg, "Dec must be in the range [-90, +90] degrees. Read '%lf'", p.de_deg);
-  		  close_stat_json(-1, errmsg, n_sats_found, n_sats);
+  		  close_stat_json(-1, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 		  exit(-1);
 		}
 		in_region = true;
@@ -500,7 +508,7 @@ int main(int argc, char **argv)
           default:
 		open_json();
 		sprintf(errmsg, "Unrecognized command-line option '%s'", argv[i]);
-  		close_stat_json(-2, errmsg, n_sats_found, n_sats);
+  		close_stat_json(-2, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 		exit(-2);
 		break;
 	}  // end switch
@@ -538,7 +546,7 @@ int main(int argc, char **argv)
 	sprintf(tle_list_file, "%s/%s", tle_path, ++argv[iarg]);
 	if ( !(lisfile = fopen(tle_list_file, "rb")) ) {
 		sprintf(errmsg, "Could not open input file %s", tle_list_file);
-  		close_stat_json(2, errmsg, n_sats_found, n_sats);
+  		close_stat_json(2, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 		exit(2);
 	}
   }
@@ -557,7 +565,7 @@ int main(int argc, char **argv)
 
   if ( (sbuff = (char *)malloc(max_satbuff)) == NULL ) {
 	sprintf(errmsg, "Could not allocate required buffer memory");
-  	close_stat_json(3, errmsg, n_sats_found, n_sats);
+  	close_stat_json(3, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 	exit(3);
   }
 
@@ -615,7 +623,7 @@ int main(int argc, char **argv)
 /* Sun cartesian coordinates (in km) */ 
   sphrad2v(sun.ra, sun.dec, sun.d_km);
 
-  for (int i = 0; i < 3; i++)
+  for (i = 0; i < 3; i++)
 	sun.d_km[i] *= AU_KM;
 
 
@@ -666,14 +674,14 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
  
     if ( !(ifile = fopen(tle_path_file, "rb")) ) {  /* Report error message and stop */
 	sprintf(errmsg, "Could not open input file %s", tle_path_file);
-  	close_stat_json(2, errmsg, n_sats_found, n_sats);
+  	close_stat_json(2, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 	exit(2);
     }
 
 
     if ( !fgets( line1, sizeof(line1), ifile) ) {
 	sprintf(errmsg, "Could not read first TLE line from file %s", tle_path_file);
-	close_stat_json(-2, errmsg, n_sats_found, n_sats);
+	close_stat_json(-2, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 	exit(-2);
     }
 
@@ -723,7 +731,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 //printf("\nRealloc extra bytes. Now %d \n", cur_bufflen);
 		  if ( (sbuff = (char *)realloc(sbuff, cur_bufflen)) == NULL ) {
 		    sprintf(errmsg, "Could not allocate required buffer memory");
-		    close_stat_json(1, errmsg, n_sats_found, n_sats);
+		    close_stat_json(1, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 		    exit(1);
 		  }
 		}
@@ -752,7 +760,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 /* For malformed or partial tle (e.g. Bepi-Colombo) this could happen */
 	if ( isnan(ra) || isnan(dec) ) {
 		sprintf(errmsg, "Could not decode TLE data");
-		close_stat_json(2, errmsg, n_sats_found, n_sats);
+		close_stat_json(2, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 		exit(1);
 	}
 
@@ -826,6 +834,8 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 /* If satellite is in Sun light (this is preliminary. TODO to account for Sun angular size) */
 	  is_in_sunlight = ! intersect_satsun_sphere(pos, sun.d_km, eray);
 //printf("\n\n%s to Sun ray intersect Earth at %lf  %lf\n\n", sat_name, eray[0], eray[1]);
+	  if ( p.in_sunlight_only && ! is_in_sunlight )
+		continue;
 
 	  if ( !p.single_sat_i ) {
 		if ( tle.intl_desig[0] != ' ' )
@@ -871,6 +881,9 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 	  }
 	  n_sats_found++;
 
+	  if ( is_in_sunlight )
+		n_sats_in_sunlight++;
+
 	  if ( single_sat_found || n_sats_found == p.max_sats ) {
 		fclose(ifile);
 		goto end_checking;
@@ -904,7 +917,7 @@ end_checking:
   if ( single_sat && !single_sat_found )
 	sprintf(errmsg, "Requested satellite not found in TLE file");
 
-  close_stat_json(status, errmsg, n_sats_found, n_sats);
+  close_stat_json(status, errmsg, n_sats_found, n_sats, n_sats_in_sunlight);
 
   return(0);
 }

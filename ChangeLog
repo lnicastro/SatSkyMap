@@ -26,3 +26,7 @@
 2021-07-06 LN, ver. 0.3b
 	- Added (approx) computation of satellite --> Sun line intersection with Earth (sat. in sunlight?) 
 	- Minor code rearrangements in sat_skymap.c and sat_skymap_def.h
+
+2021-07-14 LN, ver. 0.3c
+	- Added "n_sats_in_sunlight" to returned json
+	- Added option "-V" to return only satellites in sunlight (potentially visible) 

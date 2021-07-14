@@ -40,6 +40,7 @@ Usage:
 OPTIONS are:
   -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)
   -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
+  -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)
   -i SatIntnlName	Single satellite selection via its international designator (region ignored)
   -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
   -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)
@@ -49,7 +50,6 @@ OPTIONS are:
   -s SatNorad_n		Single satellite selection via its NORAD number (region ignored)
   -S SatName		Satellites selection via string name (substring matching applies; region ignored)
   -t deltaT		Second epoch delta time (seconds; def. 1)
-  -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)
 
 Switches:
   -h			print this help
@@ -59,6 +59,7 @@ Switches:
   -I			Only information about the returned data and number of satellites found
  			('satellites' object not returned)
   -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h) 
+  -V			Return data only for satellites in sunlight (potentially visible)
 
 Example usage:
   sat_skymap default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20
@@ -95,7 +96,7 @@ Additional computed info:
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -d2020-01-13T12:00:00 -p90.5,-30.3 -r20
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-07-06", "version": "0.3b"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-07-14", "version": "0.3c"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -111,7 +112,7 @@ Additional computed info:
   { ... }
 
   }],
-  "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6
+  "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6, "n_sats_in_sunlight": 6
   }
 ```
 It is:
@@ -133,8 +134,8 @@ JSON shown in expanded format.
 	"swinfo": {
 		"name": "sat_skymap",
 		"author": "L. Nicastro @ INAF-OAS",
-		"date": "2021-07-06",
-		"version": "0.3b"
+		"date": "2021-07-14",
+		"version": "0.3c"
 	},
 	"geoloc_fields":{
 		"lat":{
@@ -208,6 +209,7 @@ JSON shown in expanded format.
 	"errmsg": "",
 	"n_sats_found": 1,
 	"n_sats": 1
+	"n_sats_in_sunlight": 0
 }
 ```
 **Search satellite(s) by (initial) name**
@@ -221,8 +223,8 @@ JSON shown in expanded format.
    "swinfo": {
 	"name": "sat_skymap",
 	"author": "L. Nicastro @ INAF-OAS",
-	"date": "2021-07-06",
-	"version": "0.3b"
+	"date": "2021-07-14",
+	"version": "0.3c"
    },
    "input_params": {
 	"tle_file": "stations.txt",
@@ -317,7 +319,7 @@ JSON shown in expanded format.
 		"name": "LEMUR-2-ALEXANDER",
 		"intl_desig": "2018-046F",
 		"norad_n": 43559,
-		"data": [ 351.8948, 17.6476, 351.9209, 17.6085, 9443.62, 265.7559, 147, 2.781, 0, 321031 ]
+		"data": [ 351.8948, 17.6476, 351.9209, 17.6085, 9443.62, 265.7559, 147, 2.781, 1, 321031 ]
 	},
 	{
 		"name": "LEMUR-2-YUASA",
@@ -336,6 +338,7 @@ JSON shown in expanded format.
    "errmsg": "",
    "n_sats_found": 4,
    "n_sats": 4
+   "n_sats_in_sunlight": 2
 }
 ```
 
