@@ -33,7 +33,7 @@
     -I			Only information about the returned data and number of satellites found
   			('satellites' object not returned)
     -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h) 
-    -V			Return data only for satellites in sunlight (potentially visible)
+    -V			Return data only for sunlit satellites (potentially visible)
 
   Output:
     A json string with information about the satellites in the FoV (see below).
@@ -63,7 +63,7 @@
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
     "notes": "All coordinates and radius in degrees. GMST, LMST in hrs."},
   "sun": {"ra":294.566, "dec":-21.517, "az": 101.818, "alt": 24.735, "lon":   2.123, "parang":-113.376, "separation_deg":123.255},
-  "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "in_sunlit", "HPXID_8"],
+  "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "sunlit", "HPXID_8"],
     "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "sunlit sat. flag", "HEALPix order 8 nested schema ID"],
     "type": ["double", "double", "double", "double", "double", "float", "float", "float", "int", "int"],
     "unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", "", ""]},
@@ -81,7 +81,7 @@
     Separation: angular separation in degrees from the search point
     PA: position angle of motion
     Speed: apparent angular rate of motion in arcminutes/second (or degrees/minute)
-    in_sunlight: 0 => in Earth shade, 1 => in sunlight (preliminary; work in progress)
+    sunlit: 0 => in Earth shade, 1 => sunlit (preliminary; work in progress)
     HPXID_8: HEALPix order 8 nested schema ID
 
   Example (ISS position):
@@ -108,7 +108,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 14/07/2021
+  LN @ INAF-OAS, Jan 2020.  Last change: 10/10/2021
 */
 
 #include <ctype.h>
@@ -177,7 +177,7 @@ void Usage() {
   "  -I			Only information about the returned data and number of satellites found\n"
   " 			('satellites' object not returned)\n"
   "  -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h)\n"
-  "  -V			Return data only for satellites in sunlight (visible)\n\n"
+  "  -V			Return data only for sunlit satellites (visible)\n\n"
 
   "Example usage:\n"
   "  %s default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20\n"
@@ -208,8 +208,8 @@ void add_sundata_json(Sun sun) {
 
 void add_fieldsdesc_json() {
   printf(
-    "\"data_fields\": {\"name\": [\"RA_start\", \"Dec_start\", \"RA_end\", \"Dec_end\", \"Distance\", \"Separation\", \"PA\", \"Speed\", \"in_sunlight\", \"HPXID_8\"], "
-    "\"desc\": [\"RA T_ini\", \"Dec T_ini\", \"RA T_end\", \"Dec T_end\", \"distance to sat.\", \"angular separation\", \"position angle\", \"apparent angular rate of motion\", \"sat. in sunlight flag\", \"HEALPix order 8 nested schema ID\"], "
+    "\"data_fields\": {\"name\": [\"RA_start\", \"Dec_start\", \"RA_end\", \"Dec_end\", \"Distance\", \"Separation\", \"PA\", \"Speed\", \"sunlit\", \"HPXID_8\"], "
+    "\"desc\": [\"RA T_ini\", \"Dec T_ini\", \"RA T_end\", \"Dec T_end\", \"distance to sat.\", \"angular separation\", \"position angle\", \"apparent angular rate of motion\", \"sunlit sat. flag\", \"HEALPix order 8 nested schema ID\"], "
     "\"type\": [\"double\", \"double\", \"double\", \"double\", \"double\", \"float\", \"float\", \"float\", \"int\", \"int\"], "
     "\"unit\": [\"deg\", \"deg\", \"deg\", \"deg\", \"km\", \"deg\", \"deg\", \"arcmin/s\", \"\", \"\"]},");
 }
@@ -376,7 +376,7 @@ int main(int argc, char **argv)
 				rather than RA, Dec. If true, p.geoloc_requested is also set to true. */ 
   p.use_deftledir = false;  /* If default directory with TLE files should be used (def. ./) */
   p.altrng_requested = false;  /* If altitude range filter requested */
-  p.in_sunlight_only = false;  /* If only data for illuminated satellites requested */
+  p.sunlit_only = false;  /* If only data for illuminated satellites requested */
   p.intl_desig[0] = '\0';
   p.satname[0] = '\0';
   p.norad_n = 0;
@@ -423,7 +423,7 @@ int main(int argc, char **argv)
 		i--;
 		break;
  	  case 'V':
-		p.in_sunlight_only = true;
+		p.sunlit_only = true;
 		i--;
 		break;
 
@@ -740,7 +740,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 	}
 
 	int is_deep = select_ephemeris(&tle),
-	    is_in_sunlight;
+	    is_sunlit;
 //printf("is_deep: %d\n", is_deep);
 	double sat_params[N_SAT_PARAMS], ang_sep, ang_sep1, d_ra, d_dec,
 		ra, dec, ra1, dec1, sep_to_satellite, t_since,
@@ -832,9 +832,9 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 	  double speed, posn_ang_of_motion, eray[2];
 
 /* If satellite is in Sun light (this is preliminary. TODO to account for Sun angular size) */
-	  is_in_sunlight = ! intersect_satsun_sphere(pos, sun.d_km, eray);
+	  is_sunlit = ! intersect_satsun_sphere(pos, sun.d_km, eray);
 //printf("\n\n%s to Sun ray intersect Earth at %lf  %lf\n\n", sat_name, eray[0], eray[1]);
-	  if ( p.in_sunlight_only && ! is_in_sunlight )
+	  if ( p.sunlit_only && ! is_sunlit )
 		continue;
 
 	  if ( !p.single_sat_i ) {
@@ -876,12 +876,12 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 		printf("\"data\": [%8.4lf,%8.4lf,%8.4lf,%8.4lf,%9.2lf,%6.4lf,%3d,%6.3lf,%d,%ld]}",
 			ra * RAD2DEG, dec * RAD2DEG, ra1 * RAD2DEG, dec1 * RAD2DEG,
 			sep_to_satellite, ang_sep,
-			(int)(posn_ang_of_motion * RAD2DEG), speed, is_in_sunlight, id8nest);
+			(int)(posn_ang_of_motion * RAD2DEG), speed, is_sunlit, id8nest);
 /* Speed is displayed in arcminutes/second (== degrees/minute) */
 	  }
 	  n_sats_found++;
 
-	  if ( is_in_sunlight )
+	  if ( is_sunlit )
 		n_sunlit_sats++;
 
 	  if ( single_sat_found || n_sats_found == p.max_sats ) {

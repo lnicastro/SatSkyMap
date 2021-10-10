@@ -1,7 +1,7 @@
 /*
    Definitions for sat_skymap
   
-   LN @ INAF-OAS, Feb 2020                      Last change: 14/07/2021
+   LN @ INAF-OAS, Feb 2020                      Last change: 10/10/2021
 */
 
 #ifndef SAT_SKYMAP_DEF_H
@@ -45,7 +45,7 @@ const char *progname = "sat_skymap",
 		norad_n;
 	   bool haversine,
 		info_only,
-		in_sunlight_only,
+		sunlit_only,
 		single_sat_i,
 		single_sat_n,
 		satname_filter,
