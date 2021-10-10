@@ -59,7 +59,7 @@ Switches:
   -I			Only information about the returned data and number of satellites found
  			('satellites' object not returned)
   -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h) 
-  -V			Return data only for satellites in sunlight (potentially visible)
+  -V			Return data only for sunlit satellites (potentially visible)
 
 Example usage:
   sat_skymap default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20
@@ -102,8 +102,8 @@ Additional computed info:
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
     "notes": "All coordinates and radius in degrees. GMST, LMST in hrs."},
   "sun": {"ra":294.566, "dec":-21.517, "az": 101.818, "alt": 24.735, "lon":   2.123, "parang":-113.376, "separation_deg":123.255},
-  "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "in_sunlight", "HPXID_8"],
-    "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "sat. in sunlight flag", "HEALPix order 8 nested schema ID"],
+  "data_fields": {"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "in_sunlit", "HPXID_8"],
+    "desc": ["RA Tinit", "Dec Tinit", "RA Tend", "Dec Tend", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "sunlit sat. flag", "HEALPix order 8 nested schema ID"],
     "type": ["double", "double", "double", "double", "double", "float", "float", "float", "int", "int"],
     "unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", ""]},
   "satellites": [{"name": "STARLINK-23", "intl_desig": "1919-029C ", "norad_n": 44237,
@@ -112,7 +112,7 @@ Additional computed info:
   { ... }
 
   }],
-  "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6, "n_sats_in_sunlight": 6
+  "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6, "n_sunlit_sats": 6
   }
 ```
 It is:
@@ -120,7 +120,7 @@ It is:
 -  Separation: angular separation from the search point in *degrees*
 -  PA: position angle of motion in *degrees*
 -  Speed: apparent angular rate of motion in *arcminutes/second* (== *degrees/minute*)
--  in_sunlight: *0* => in Earth shade, *1* => in sunlight (preliminary; work in progress)
+-  sunlit: *0* => in Earth shade, *1* => sunlit (preliminary; work in progress)
 -  HPXID_8: HEALPix order 8 nested schema ID
 
 
@@ -188,8 +188,8 @@ JSON shown in expanded format.
 		"separation_deg": 37.974
 	},
 	"data_fields": {
-		"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "in_sunlight", "HPXID_8"],
-		"desc": ["RA T_ini", "Dec T_ini", "RA T_end", "Dec T_end", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "sat. in sunlight flag", "HEALPix order 8 nested schema ID"],
+		"name": ["RA_start", "Dec_start", "RA_end", "Dec_end", "Distance", "Separation", "PA", "Speed", "in_sunlit", "HPXID_8"],
+		"desc": ["RA T_ini", "Dec T_ini", "RA T_end", "Dec T_end", "distance to sat.", "angular separation", "position angle", "apparent angular rate of motion", "sunlit sat. flag", "HEALPix order 8 nested schema ID"],
 		"type": ["double", "double", "double", "double", "double", "float", "float", "float", "int", "int"],
 		"unit": ["deg", "deg", "deg", "deg", "km", "deg", "deg", "arcmin/s", "", ""]
 	},
@@ -209,7 +209,7 @@ JSON shown in expanded format.
 	"errmsg": "",
 	"n_sats_found": 1,
 	"n_sats": 1
-	"n_sats_in_sunlight": 0
+	"n_sunlit_sats": 0
 }
 ```
 **Search satellite(s) by (initial) name**
@@ -268,7 +268,7 @@ JSON shown in expanded format.
 		"Separation",
 		"PA",
 		"Speed",
-		"in_sunlight",
+		"in_sunlit",
 		"HPXID_8"
 	],
 	"desc": [
@@ -280,7 +280,7 @@ JSON shown in expanded format.
 		"angular separation",
 		"position angle",
 		"apparent angular rate of motion",
-		"sat. in sunlight flag",
+		"sunlit sat. flag",
 		"HEALPix order 8 nested schema ID"
 	],
 	"type": [
@@ -338,7 +338,7 @@ JSON shown in expanded format.
    "errmsg": "",
    "n_sats_found": 4,
    "n_sats": 4
-   "n_sats_in_sunlight": 2
+   "n_sunlit_sats": 2
 }
 ```
 

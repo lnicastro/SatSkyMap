@@ -30,3 +30,6 @@
 2021-07-14 LN, ver. 0.3c
 	- Added "n_sats_in_sunlight" to returned json
 	- Added option "-V" to return only satellites in sunlight (potentially visible) 
+
+2021-10-10 LN, ver. 0.3c
+	- Variable/tag name changes
