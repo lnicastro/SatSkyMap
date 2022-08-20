@@ -2,9 +2,10 @@
 # 
 # Count and log the number of satellites from the SpaceTrack retrieved TLE data
 #
-# Edit to match your needs. On MacoS "sed" needs to be raplaced with "gsed" (gnu-sed) to work.
+# Edit to match your needs.
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 01/07/2021
+#
+# LN @ INAF-OAS Jan. 2020.  Last change: 19/08/2022
 #--
 
 set +o noclobber
@@ -32,14 +33,13 @@ cd $TLEDIR
 rm -f $OUTFILE $OUTFILE_DEB $OUTFILE_NORAD
 
 # List of most relevant TLE files, excluding debris
-#tlesmain=( tle-new stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos planet spire geo intelsat ses iridium iridium-NEXT starlink orbcomm globalstar amateur x-comm other-comm satnogs gorizont raduga molniya gps-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other gpz gpz-plus )
-tlesmain=( tle-new stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos spire geo iridium iridium-NEXT globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other gpz gpz-plus )
+tlesmain=( last-30-days stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos spire geo iridium iridium-NEXT globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other )
 
-# Supplemental TLE files (not that gps is renamed to gps-ops)
-tlessupp=( glonass intelsat oneweb orbcomm planet ses starlink transporter-2 meteosat telesat iss cpf )
+# Supplemental TLE files (note that "gps" is renamed to "gps-ops" => removed from the list)
+tlessupp=( starlink starlink-g4-27 oneweb planet iridium glonass meteosat intelsat ses telesat orbcomm iss cpf )
 
-# List of Debris TLE files
-tlesdeb=( 2019-006 1999-025 iridium-33-debris cosmos-2251-debris )
+# List of debris TLE files
+tlesdeb=( 1982-092 1999-025 iridium-33-debris cosmos-2251-debris )
 
 for TLE_NAME in "${tlesmain[@]}"
 do
@@ -57,7 +57,7 @@ do
 	sed -n 3~3p $TLE | cut -d " " -f 2 >> ${OUTFILE_NORAD}_tmp
 done
 
-# Debries names are all the same in a file
+# Debris names are all the same in a file
 for TLE_NAME in "${tlesdeb[@]}"
 do
 	TLE=$TLE_NAME".txt"
@@ -70,7 +70,7 @@ rm ${OUTFILE_NORAD}_tmp
 
 n_sats=`cat $OUTFILE_NORAD | wc -l`
 
-# Debries IDs are all different so just sum the counts for each file
+# Debris IDs are all different so just sum the counts for each file
 n_debs=`awk '{sum += $2} END {print sum}' $OUTFILE_DEB`
 
 # The total
