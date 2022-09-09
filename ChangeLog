@@ -36,3 +36,6 @@
 
 2022-08-18 LN, ver. 0.3c
 	- Updated celestrak retrieval links in tle_retrieve.sh (tle_satcount.sh updated too)
+
+2022-09-09 LN, ver. 0.3c
+	- Updated (again) celestrak retrieval links in tle_retrieve.sh (tle_satcount.sh updated too)

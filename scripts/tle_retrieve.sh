@@ -8,16 +8,17 @@
 #
 # Edit to match your needs.
 #
-# 18/8/2022: Updated celestrak retrieval links
+# 18/08/2022: Updated celestrak retrieval links
+# 06/09/2022: Updated for iridium -> iridium-NEXT in the supplemental archive
 #
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 19/08/2022
+# LN @ INAF-OAS Jan. 2020.  Last change: 09/09/2022
 #--
 
 set +o noclobber
 
 URL="https://celestrak.com/NORAD/elements/gp.php?FORMAT=tle&GROUP="
-URLS="https://celestrak.com/gp.php?FORMAT=tle&SPECIAL="
+URLS="https://celestrak.com/NORAD/elements/gp.php?FORMAT=tle&SPECIAL="
 URLSUPP="https://celestrak.org/NORAD/elements/supplemental/sup-gp.php?FORMAT=tle&FILE="
 
 TIME="10"
@@ -37,7 +38,6 @@ fi
 cd $OUTDIR
 
 # List of most relevant TLE files
-#tlesmain=( last-30-days stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos spire geo iridium iridium-NEXT globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other glonass intelsat oneweb orbcomm planet ses starlink )
 tlesmain=( last-30-days stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos spire geo iridium iridium-NEXT globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other )
 
 date | tee $LOGFILE
@@ -60,7 +60,13 @@ done
 # Previewsly in the main list: gps (as "gps-ops"), intelsat, oneweb, orbcomm, planet, ses, starlink
 # Note: multiple entries marking pre and post-maneuver [PM] TLEs (e.g. for intelsat) are not yet managed.
 #       iss.txt not used (it reports "segments").
-tlessupp=( starlink starlink-g4-27 oneweb planet iridium gps glonass meteosat intelsat ses telesat orbcomm iss cpf )
+#
+# Note: iridium is in fact iridium-NEXT
+
+tlessupp=( starlink oneweb planet iridium gps glonass meteosat intelsat ses telesat orbcomm iss cpf )
+
+echo Supplemental GP Element Sets
+echo ""
 
 for TLE_NAME in "${tlessupp[@]}"
 do
@@ -68,7 +74,12 @@ do
 
 	TLE=$TLE_NAME".txt"
 	if [ `curl -L -s -w '%{http_code}' -o $TMPFILE --max-time $TIME $URLSUPP$TLE_NAME` -eq 200 ]; then
-		mv $TMPFILE $TLE
+		if [ $TLE_NAME = iridium ]; then
+			mv $TMPFILE iridium-NEXT.txt
+		else
+			mv $TMPFILE $TLE
+		fi
+
 		echo retrieved. | tee -a $LOGFILE
 	else
 		echo Retrieval failed. | tee -a $LOGFILE

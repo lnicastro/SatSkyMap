@@ -5,7 +5,7 @@
 # Edit to match your needs.
 #
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 19/08/2022
+# LN @ INAF-OAS Jan. 2020.  Last change: 09/09/2022
 #--
 
 set +o noclobber
@@ -33,10 +33,11 @@ cd $TLEDIR
 rm -f $OUTFILE $OUTFILE_DEB $OUTFILE_NORAD
 
 # List of most relevant TLE files, excluding debris
-tlesmain=( last-30-days stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos spire geo iridium iridium-NEXT globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other )
+tlesmain=( last-30-days stations visual active analyst weather noaa goes resource sarsat dmc tdrss argos spire geo iridium iridium-NEXT globalstar swarm amateur x-comm other-comm satnogs gorizont raduga molniya gnss gps-ops glo-ops galileo beidou sbas nnss musson science geodetic engineering education military radar cubesat other gpz gpz-plus )
 
-# Supplemental TLE files (note that "gps" is renamed to "gps-ops" => removed from the list)
-tlessupp=( starlink starlink-g4-27 oneweb planet iridium glonass meteosat intelsat ses telesat orbcomm iss cpf )
+# Supplemental TLE files not in main list
+# Note: "iss" not includede and "gps" is renamed to "gps-ops" => removed from the list
+tlessupp=( starlink oneweb planet glonass meteosat intelsat ses telesat orbcomm cpf )
 
 # List of debris TLE files
 tlesdeb=( 1982-092 1999-025 iridium-33-debris cosmos-2251-debris )
@@ -88,6 +89,7 @@ echo '<?php
 $my_satcount_arr = array(' > $PHPOUT
 
 awk '{print "\""$1"\"" " => "$2","}' $OUTFILE >> $PHPOUT
+awk '{print "\""$1"\"" " => "$2","}' $OUTFILE_DEB >> $PHPOUT
 
 # Here we add the count of (unique) satellites including / excluding debris
 echo "'@ALL_merged_nodeb' => $n_sats," >> $PHPOUT
