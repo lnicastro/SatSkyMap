@@ -39,3 +39,6 @@
 
 2022-09-09 LN, ver. 0.3c
 	- Updated (again) celestrak retrieval links in tle_retrieve.sh (tle_satcount.sh updated too)
+
+2022-09-16 LN, ver. 0.3c
+	- Added "run_command" tag to the output json; it caontains the given full command line

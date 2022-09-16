@@ -96,7 +96,7 @@ Additional computed info:
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -d2020-01-13T12:00:00 -p90.5,-30.3 -r20
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2021-07-14", "version": "0.3c"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2022-09-16", "version": "0.3c"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -112,7 +112,7 @@ Additional computed info:
   { ... }
 
   }],
-  "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6, "n_sunlit_sats": 6
+  "run_command": "sat_skymap default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20", "status": 0, "errmsg": "", "n_sats_found": 6, "n_sats": 6, "n_sunlit_sats": 6
   }
 ```
 It is:
@@ -134,7 +134,7 @@ JSON shown in expanded format.
 	"swinfo": {
 		"name": "sat_skymap",
 		"author": "L. Nicastro @ INAF-OAS",
-		"date": "2021-07-14",
+		"date": "2022-09-16",
 		"version": "0.3c"
 	},
 	"geoloc_fields":{
@@ -205,6 +205,7 @@ JSON shown in expanded format.
 		},
 		"data": [185.2172, -53.2256, 185.2753, -53.2252, 11436.45, 149.1219, 89, 2.087, 0, 690893]
 	}],
+	"run_command": "sat_skymap stations.txt -H -l44.52804,11.33715,23.5 -j58959.53 -s 25544",
 	"status": 0,
 	"errmsg": "",
 	"n_sats_found": 1,
@@ -217,13 +218,13 @@ JSON shown in expanded format.
 JSON shown in expanded format.
 
 ```
-./sat_skymap stations.txt stations.txt -S LEMUR
+./sat_skymap stations.txt -S LEMUR
 
 {
    "swinfo": {
 	"name": "sat_skymap",
 	"author": "L. Nicastro @ INAF-OAS",
-	"date": "2021-07-14",
+	"date": "2022-09-16",
 	"version": "0.3c"
    },
    "input_params": {
@@ -334,6 +335,7 @@ JSON shown in expanded format.
 		"data": [ 77.0633, 0.0105, 77.0993, 0.0394, 9723.66, 33.1553, 51, 2.772, 0, 366949 ]
 	}
    ],
+   "run_command": "sat_skymap stations.txt -S LEMUR",
    "status": 0,
    "errmsg": "",
    "n_sats_found": 4,
@@ -346,6 +348,6 @@ JSON shown in expanded format.
 ## Acknowledgements
 Parts of the code from [Project Pluto](https://www.projectpluto.com/), Bill Gray's `sat_code` on [GitHub](https://github.com/Bill-Gray/sat_code).
 
-TLE files from [CeleStrak](https://celestrak.com/).
+TLE files from [CeleStrak](https://celestrak.com/) and [Space-Track](https://www.space-track.org/).
 
 HEALPix C library used. See [HEALPix](https://healpix.sourceforge.io/).
