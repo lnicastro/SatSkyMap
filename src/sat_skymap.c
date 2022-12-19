@@ -57,7 +57,7 @@
   The output looks like this:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2022-09-16", "version": "0.3c"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2022-12-19", "version": "0.3d"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -90,7 +90,7 @@
   Output:
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2022-09-16", "version": "0.3c"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2022-12-19", "version": "0.3d"},
   "geoloc_fields": {"lat": {"desc": "Geodetic Latitude", "unit": "deg"}, "lon": {"desc": "Geodetic Longitude", "unit": "deg"}, "alt": {"desc": "Geodetic Altitude", "unit": "km"}, "theta": {"desc": "Equatorial angle (Lon + GMST = RA)", "unit": "deg"}},
   "input_params": {"tle_file": "stations.txt", "location": {"lat": 44.5280, "lon":  11.3371, "alt":    23.5},
     "region": {"ra":  51.2026, "dec": 44.5280, "radius": 20.0000, "lmst":  3.4135, "az":   0.0000, "alt": 90.0000, "parang": 180.000},
@@ -108,7 +108,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 16/09/2022
+  LN @ INAF-OAS, Jan 2020.  Last change: 19/12/2022
 */
 
 #include <ctype.h>
@@ -228,9 +228,15 @@ void add_satlatlon_json(Geoloc geo) {
     printf( "\"geoloc\": {\"lat\":%7.3lf, \"lon\":%7.3lf, \"alt\":%9.2lf, \"theta\":%8.3lf}, ", geo.lat, geo.lon, geo.alt, geo.theta);
 }
 
-void close_stat_json(int argc, char **argv, int status, char *errmsg, int n_sats_found, int n_sats, int n_sunlit_sats) {
+void close_stat_json(int argc, char **argv, bool input_list, int status, char *errmsg, int n_sats_found, int n_sats, int n_sunlit_sats) {
+  int iarg = 1;
   printf(" \"run_command\": \"%s", progname);
-  for ( int i = 1; i < argc; i++ ) {
+  if ( input_list ) {
+	printf (" @%s", argv[1]);
+	iarg++;
+  }
+
+  for ( int i = iarg; i < argc; i++ ) {
 	printf (" %s", argv[i]);
   }
   printf("\", \"status\": %d, \"errmsg\": \"%s\", \"n_sats_found\": %d, \"n_sats\": %d,"
@@ -346,13 +352,14 @@ int main(int argc, char **argv)
 	 target_ra, target_dec, target_lon = 0, target_lat = 0;
   int i, par_pos, status = 0, n_sats_found = 0, n_sats = 0, n_sunlit_sats = 0,
 	 len_intl_desig = 0, len_satname = 0;
-  bool in_region = false;  /* used for single satellite request */
+  bool in_region = false,  /* used for single satellite request */
+	input_list = false;  /* if the input file is in fact a TLEs list */
 
 
   if ( argc < 2 ) {
 	open_json();
 	sprintf(errmsg, "Example usage:\n %s default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20", progname);
- 	close_stat_json(argc, argv, 1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+ 	close_stat_json(argc, argv, input_list, 1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 	exit(0);
   }
 
@@ -469,7 +476,7 @@ int main(int argc, char **argv)
 		if ( p.lat < -90. || p.lat > 90. )  {
 		  open_json();
 		  sprintf(errmsg, "Latitude must be in the range [-90, +90] degrees. Read '%lf'", p.lat);
-  		  close_stat_json(argc, argv, -1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+  		  close_stat_json(argc, argv, input_list, -1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 		  exit(-1);
 		}
 		break;
@@ -481,13 +488,13 @@ int main(int argc, char **argv)
 		if ( p.ra_deg < 0. || p.ra_deg > 360. )  {
 		  open_json();
 		  sprintf(errmsg, "RA must be in the range [0, 360[ degrees. Read '%lf'", p.ra_deg);
-  		  close_stat_json(argc, argv, -1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+  		  close_stat_json(argc, argv, input_list, -1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 		  exit(-1);
 		}
 		if ( p.de_deg < -90. || p.de_deg > 90. )  {
 		  open_json();
 		  sprintf(errmsg, "Dec must be in the range [-90, +90] degrees. Read '%lf'", p.de_deg);
-  		  close_stat_json(argc, argv, -1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+  		  close_stat_json(argc, argv, input_list, -1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 		  exit(-1);
 		}
 		in_region = true;
@@ -512,7 +519,7 @@ int main(int argc, char **argv)
           default:
 		open_json();
 		sprintf(errmsg, "Unrecognized command-line option '%s'", argv[i]);
-  		close_stat_json(argc, argv, -2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+  		close_stat_json(argc, argv, input_list, -2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 		exit(-2);
 		break;
 	}  // end switch
@@ -533,7 +540,6 @@ int main(int argc, char **argv)
  
   const short fname_len = 64;
   char *s, row[fname_len], norad_name[7], tle_list_file[200];
-  bool input_list = false;
   FILE *lisfile, *ifile;
 
   open_json();
@@ -550,7 +556,7 @@ int main(int argc, char **argv)
 	sprintf(tle_list_file, "%s/%s", tle_path, ++argv[iarg]);
 	if ( !(lisfile = fopen(tle_list_file, "rb")) ) {
 		sprintf(errmsg, "Could not open input file %s", tle_list_file);
-  		close_stat_json(argc, argv, 2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+  		close_stat_json(argc, argv, input_list, 2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 		exit(2);
 	}
   }
@@ -569,7 +575,7 @@ int main(int argc, char **argv)
 
   if ( (sbuff = (char *)malloc(max_satbuff)) == NULL ) {
 	sprintf(errmsg, "Could not allocate required buffer memory");
-  	close_stat_json(argc, argv, 3, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+  	close_stat_json(argc, argv, input_list, 3, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 	exit(3);
   }
 
@@ -612,15 +618,16 @@ int main(int argc, char **argv)
 
   lpsun_radec(jd, &sun.ra, &sun.dec);
 
-/* Lon in [0, 360[ deg +W */
-  sun.lon = fmod(p.gmst * 15. + 360. - sun.ra * RAD2DEG, 360.);
- 
+/* Lon in [0, 360[ deg +W  (GEO_LON = -GHA = -(GMST - RA))*/
+  sun.lon = fmod(sun.ra * RAD2DEG - p.gmst * 15. + 360., 360.);
+  //sun.lon = fmod(p.gmst * 15. - 360. - sun.ra * RAD2DEG, 360.);
+
   sun.ha = p.lmst - sun.ra * RAD2HRS;
   dechalat2alt(sun.dec, sun.ha, p.lat, &sun.alt, &sun.az, &sun.parang);
 
-  if ( p.geoloc_reference )
-    sun.sep = skysep_h(target_lon, target_lat, sun.lon*DEG2RAD, sun.dec);
-  else
+  //if ( p.geoloc_reference )
+    //sun.sep = skysep_h(target_lon, target_lat, sun.lon*DEG2RAD, sun.dec);
+  //else
     sun.sep = skysep_h(target_ra, target_dec, sun.ra, sun.dec);
 
 
@@ -636,9 +643,9 @@ int main(int argc, char **argv)
 
 /* Lon in [-180, +180] deg +E */
   if ( sun.lon > 180. )
-	sun.lon = 360. - sun.lon;
-  else
-	sun.lon *= -1;
+	sun.lon = sun.lon - 360.;
+//  else
+//	sun.lon *= -1;
 
 #ifdef DEBUG
 printf("JD %lf \n", jd);
@@ -678,14 +685,14 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
  
     if ( !(ifile = fopen(tle_path_file, "rb")) ) {  /* Report error message and stop */
 	sprintf(errmsg, "Could not open input file %s", tle_path_file);
-  	close_stat_json(argc, argv, 2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+  	close_stat_json(argc, argv, input_list, 2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 	exit(2);
     }
 
 
     if ( !fgets( line1, sizeof(line1), ifile) ) {
 	sprintf(errmsg, "Could not read first TLE line from file %s", tle_path_file);
-	close_stat_json(argc, argv, -2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+	close_stat_json(argc, argv, input_list, -2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 	exit(-2);
     }
 
@@ -735,7 +742,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 //printf("\nRealloc extra bytes. Now %d \n", cur_bufflen);
 		  if ( (sbuff = (char *)realloc(sbuff, cur_bufflen)) == NULL ) {
 		    sprintf(errmsg, "Could not allocate required buffer memory");
-		    close_stat_json(argc, argv, 1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+		    close_stat_json(argc, argv, input_list, 1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 		    exit(1);
 		  }
 		}
@@ -764,7 +771,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 /* For malformed or partial tle (e.g. Bepi-Colombo) this could happen */
 	if ( isnan(ra) || isnan(dec) ) {
 		sprintf(errmsg, "Could not decode TLE data");
-		close_stat_json(argc, argv, 2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+		close_stat_json(argc, argv, input_list, 2, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 		exit(1);
 	}
 
@@ -921,7 +928,7 @@ end_checking:
   if ( single_sat && !single_sat_found )
 	sprintf(errmsg, "Requested satellite not found in TLE file");
 
-  close_stat_json(argc, argv, status, errmsg, n_sats_found, n_sats, n_sunlit_sats);
+  close_stat_json(argc, argv, input_list, status, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 
   return(0);
 }
