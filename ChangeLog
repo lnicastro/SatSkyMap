@@ -42,3 +42,9 @@
 
 2022-09-16 LN, ver. 0.3c
 	- Added "run_command" tag to the output json; it caontains the given full command line
+
+2022-12-19 LN, ver. 0.3c
+	- Fixed Sun latitude display in the range [-180, 180]
+
+2023-01-02 LN, ver. 0.3c
+	- Updated list of TLE files in ALL_merged.lis and ALL_merged_nodeb.lis

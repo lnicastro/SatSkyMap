@@ -18,9 +18,11 @@ intelsat.txt
 ses.txt
 iridium.txt
 iridium-NEXT.txt
+oneweb.txt
 starlink.txt
 orbcomm.txt
 globalstar.txt
+swarm.txt
 amateur.txt
 x-comm.txt
 other-comm.txt
@@ -28,7 +30,9 @@ satnogs.txt
 gorizont.txt
 raduga.txt
 molniya.txt
+gnss.txt
 gps-ops.txt
+glo-ops.txt
 galileo.txt
 beidou.txt
 sbas.txt
