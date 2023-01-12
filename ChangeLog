@@ -46,5 +46,10 @@
 2022-12-19 LN, ver. 0.3c
 	- Fixed Sun latitude display in the range [-180, 180]
 
-2023-01-02 LN, ver. 0.3c
+2023-01-02 LN, ver. 0.3d
 	- Updated list of TLE files in ALL_merged.lis and ALL_merged_nodeb.lis
+
+2023-01-11 LN, ver. 0.3e
+	- Use new get_el.c to deal with non standard TLE data format (e.g. used for satellites in L2 - see https://github.com/Bill-Gray/tles/)
+	- Added TLE files gaia_2023.txt and jwt_2023.txt
+	- tle_retrieve.sh updated

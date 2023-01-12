@@ -10,9 +10,10 @@
 #
 # 18/08/2022: Updated celestrak retrieval links
 # 06/09/2022: Updated for iridium -> iridium-NEXT in the supplemental archive
+# 13/09/2022: Added IXPE to the "special" TLE collection
 #
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 09/09/2022
+# LN @ INAF-OAS Jan. 2020.  Last change: 11/01/2023
 #--
 
 set +o noclobber
@@ -65,6 +66,7 @@ done
 
 tlessupp=( starlink oneweb planet iridium gps glonass meteosat intelsat ses telesat orbcomm iss cpf )
 
+echo ""
 echo Supplemental GP Element Sets
 echo ""
 
@@ -134,30 +136,30 @@ done
 #
 # Produce the TLE list file for special satellites. Comment out if not needed.
 #
-awk '/HST|CXO|GLAST|SWIFT|NUSTAR|AGILE|INTEGRAL|ASTROSAT|HXMT|XMM|WISE|SDO/ { print ; for(n=0; n<2; n++) { getline ; print } }' science.txt | tr -d '\r' > special.txt
+awk '/HST|CXO|GLAST|SWIFT|NUSTAR|AGILE|INTEGRAL|ASTROSAT|HXMT|XMM|WISE|SDO|IXPE/ { print ; for(n=0; n<2; n++) { getline ; print } }' science.txt | tr -d '\r' > special.txt
 awk '/ZARYA/ { print ; for(n=0; n<2; n++) { getline ; print } }' stations.txt | tr -d '\r' >> special.txt
 awk '/CHEOPS|TESS/ { print ; for(n=0; n<2; n++) { getline ; print } }' active.txt | tr -d '\r' >> special.txt
 
 
-# Add Gaia TLE from 2022 list (see https://github.com/Bill-Gray/tles/ => 13074a22.tle)
-  if [ ! -f $OUTDIR/gaia_2022.txt ]; then
-	echo To have Gaia TLEs move gaia_2022.txt from the scripts to the TLE dir.
+# Add Gaia TLE from 2023 list (see https://github.com/Bill-Gray/tles/ => 13074a23.tle)
+  if [ ! -f $OUTDIR/gaia_2023.txt ]; then
+	echo To have Gaia TLEs move gaia_2023.txt from the scripts to the TLE dir.
   else
 #MJD=`$BINDIR/mjdnow.php | sed -e 's/[^\.]*$//'`  # Remove fractional part
 # Use approx int MJD. See also the C code in src directory.
 	MJD=`expr $(date +%s) / 86400 + 40588`
-	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "Gaia") > 0 ) { print "Gaia"} else { print } } }' gaia_2022.txt >> special.txt
+	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "Gaia") > 0 ) { print "Gaia"} else { print } } }' gaia_2023.txt >> special.txt
   fi
 
-# Add James Webb TLE from 2022 list (see https://github.com/Bill-Gray/tles/ => 21130a.tle)
-  #if [ ! -f $OUTDIR/jwt_2022.txt ]; then
-	#echo To have JWT TLEs move jwt_2022.txt from the scripts to the TLE dir.
-  #else
+# Add James Webb TLE from 2023 list (see https://github.com/Bill-Gray/tles/ => 21130a23.tle)
+  if [ ! -f $OUTDIR/jwt_2023.txt ]; then
+	echo To have JWT TLEs move jwt_2023.txt from the scripts to the TLE dir.
+  else
 #MJD=`$BINDIR/mjdnow.php | sed -e 's/[^\.]*$//'`  # Remove fractional part
 # Use approx int MJD. See also the C code in src directory.
-	#MJD=`expr $(date +%s) / 86400 + 40588`
-	#awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "James") > 0 ) { print "James Webb"} else { print } } }' jwt_2022.txt >> special.txt
-  #fi
+	MJD=`expr $(date +%s) / 86400 + 40588`
+	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "James") > 0 ) { print "James Webb"} else { print } } }' jwt_2023.txt >> special.txt
+  fi
 
 
 #
