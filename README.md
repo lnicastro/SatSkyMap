@@ -4,6 +4,8 @@ as seen from a given point on Earth at a given epoch.
 Single satellite info, regardless of its sky position, can be requested, too.
 The executable tool name is `sat_skymap`.
 
+[![DOI](https://zenodo.org/badge/256285121.svg)](https://zenodo.org/badge/latestdoi/256285121)
+
 An interactive [web tool](https://sats.oas.inaf.it/) is available at INAF-OAS Bologna.
 
 ## Requirements
