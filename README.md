@@ -4,6 +4,8 @@ as seen from a given point on Earth at a given epoch.
 Single satellite info, regardless of its sky position, can be requested, too.
 The executable tool name is `sat_skymap`.
 
+[![DOI](https://zenodo.org/badge/256285121.svg)](https://zenodo.org/badge/latestdoi/256285121)
+
 An interactive [web tool](https://sats.oas.inaf.it/) is available at INAF-OAS Bologna.
 
 ## Requirements
@@ -96,7 +98,7 @@ Additional computed info:
 ./sat_skymap default.tle -l-29.25627,-70.73805,2400 -d2020-01-13T12:00:00 -p90.5,-30.3 -r20
 
   {
-  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2022-12-19", "version": "0.3d"},
+  "swinfo": {"name": "sat_skymap", "author": "L. Nicastro @ INAF-OAS", "date": "2023-01-11", "version": "0.3e"},
   "input_params": {"tle_file": "default.tle", "location": ["lat":-29.2563, "lon": -70.7381, "alt":  2400.0],
     "region": {"ra":  90.5000, "dec":-30.3000, "radius": 20.0000, "lmst": 14.7803, "az": 222.1310, "alt":-14.4561, "parang": 137.324},
     "mjd": 58861.50000, "epoch_UTC": "2020-01-13T12:00:00", "gmst": 19.4962, "delta_time_s": 1, "max_sats": 1000,
@@ -134,8 +136,8 @@ JSON shown in expanded format.
 	"swinfo": {
 		"name": "sat_skymap",
 		"author": "L. Nicastro @ INAF-OAS",
-		"date": "2022-12-19",
-		"version": "0.3d"
+		"date": "2023-01-11",
+		"version": "0.3e"
 	},
 	"geoloc_fields":{
 		"lat":{
@@ -224,8 +226,8 @@ JSON shown in expanded format.
    "swinfo": {
 	"name": "sat_skymap",
 	"author": "L. Nicastro @ INAF-OAS",
-	"date": "2022-12-19",
-	"version": "0.3d"
+	"date": "2023-01-11",
+	"version": "0.3e"
    },
    "input_params": {
 	"tle_file": "stations.txt",
