@@ -53,3 +53,7 @@
 	- Use new get_el.c to deal with non standard TLE data format (e.g. used for satellites in L2 - see https://github.com/Bill-Gray/tles/)
 	- Added TLE files gaia_2023.txt and jwt_2023.txt
 	- tle_retrieve.sh updated
+
+2023-07-08 LN, ver. 0.3e
+	- Added TLE files juice_2023.txt and euclid_2023.txt
+	- tle_retrieve.sh updated
