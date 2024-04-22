@@ -13,9 +13,10 @@
 # 13/09/2022: Added IXPE to the "special" TLE collection
 # 05/07/2023: Added EUCLID to the "special" TLE collection
 # 08/07/2023: Added JUICE to the "special" TLE collection
+# 22/04/2024: Updated Gaia, Euclid, JWT, JUICE TLEs
 #
 #
-# LN @ INAF-OAS Jan. 2020.  Last change: 08/07/2023
+# LN @ INAF-OAS Jan. 2020.  Last change: 22/04/2024
 #--
 
 set +o noclobber
@@ -143,40 +144,40 @@ awk '/ZARYA/ { print ; for(n=0; n<2; n++) { getline ; print } }' stations.txt | 
 awk '/CHEOPS|TESS/ { print ; for(n=0; n<2; n++) { getline ; print } }' active.txt | tr -d '\r' >> special.txt
 
 
-# Add Gaia TLE from 2023 list (see https://github.com/Bill-Gray/tles/ => 13074a23.tle)
-  if [ ! -f $OUTDIR/gaia_2023.txt ]; then
-	echo To have Gaia TLEs move gaia_2023.txt from the scripts to the TLE dir.
+# Add Gaia TLE from 2024 list (see https://github.com/Bill-Gray/tles/ => 13074a24.tle)
+  if [ ! -f $OUTDIR/gaia_2024.txt ]; then
+	echo To have Gaia TLEs move gaia_2024.txt from the scripts to the TLE dir.
   else
 # Use approx int MJD. See also the C code in src directory.
 	MJD=`expr $(date +%s) / 86400 + 40588`
-	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "Gaia") > 0 ) { print "GAIA"} else { print } } }' gaia_2023.txt >> special.txt
+	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "Gaia") > 0 ) { print "GAIA"} else { print } } }' gaia_2024.txt >> special.txt
   fi
 
-# Add James Webb TLE from 2023 list (see https://github.com/Bill-Gray/tles/ => 21130a23.tle)
-  if [ ! -f $OUTDIR/jwt_2023.txt ]; then
-	echo To have JWT TLEs move jwt_2023.txt from the scripts to the TLE dir.
+# Add James Webb TLE from 2024 list (see https://github.com/Bill-Gray/tles/ => 21130a24.tle)
+  if [ ! -f $OUTDIR/jwt_2024.txt ]; then
+	echo To have JWT TLEs move jwt_2024.txt from the scripts to the TLE dir.
   else
 # Use approx int MJD. See also the C code in src directory.
 	MJD=`expr $(date +%s) / 86400 + 40588`
-	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "James") > 0 ) { print "JAMES WEBB"} else { print } } }' jwt_2023.txt >> special.txt
+	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "James") > 0 ) { print "JAMES WEBB"} else { print } } }' jwt_2024.txt >> special.txt
   fi
 
-# Add EUCLID TLE from 2023 list (see https://github.com/Bill-Gray/tles/ => euclid.tle)
-  if [ ! -f $OUTDIR/euclid_2023.txt ]; then
-	echo To have JWT TLEs move euclid_2023.txt from the scripts to the TLE dir.
+# Add EUCLID TLE from 2024 list (see https://github.com/Bill-Gray/tles/ => euclid.tle)
+  if [ ! -f $OUTDIR/euclid_2024.txt ]; then
+	echo To have JWT TLEs move euclid_2024.txt from the scripts to the TLE dir.
   else
 # Use approx int MJD. See also the C code in src directory.
 	MJD=`expr $(date +%s) / 86400 + 40588`
-	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "Euclid") > 0 ) { print "EUCLID"} else { print } } }' euclid_2023.txt >> special.txt
+	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "Euclid") > 0 ) { print "EUCLID"} else { print } } }' euclid_2024.txt >> special.txt
   fi
 
-# Add JUICE TLE from 2023 list (see https://github.com/Bill-Gray/tles/ => juice.tle)
-  if [ ! -f $OUTDIR/juice_2023.txt ]; then
-	echo To have JUICE TLEs move juice_2023.txt from the scripts to the TLE dir.
+# Add JUICE TLE from 2024 list (see https://github.com/Bill-Gray/tles/ => juice.tle)
+  if [ ! -f $OUTDIR/juice_2024.txt ]; then
+	echo To have JUICE TLEs move juice_2024.txt from the scripts to the TLE dir.
   else
 # Use approx int MJD. See also the C code in src directory.
 	MJD=`expr $(date +%s) / 86400 + 40588`
-	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "JUICE") > 0 ) { print "JUICE"} else { print } } }' juice_2023.txt >> special.txt
+	awk -v mjd="${MJD}" '$0 ~ mjd { print ; for(n=0; n<3; n++) { getline ; if ( index($1, "JUICE") > 0 ) { print "JUICE"} else { print } } }' juice_2024.txt >> special.txt
   fi
 
 
