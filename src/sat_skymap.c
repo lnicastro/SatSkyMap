@@ -108,7 +108,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 11/01/2023
+  LN @ INAF-OAS, Jan 2020.  Last change: 22/04/2024
 */
 
 #include <ctype.h>
@@ -353,6 +353,7 @@ int main(int argc, char **argv)
   int i, par_pos, status = 0, n_sats_found = 0, n_sats = 0, n_sunlit_sats = 0,
 	 len_intl_desig = 0, len_satname = 0;
   bool in_region = false,  /* used for single satellite request */
+	in_geopos = false,  /* make sure Geo location is passed */
 	input_list = false;  /* if the input file is in fact a TLEs list */
 
 
@@ -367,13 +368,13 @@ int main(int argc, char **argv)
   Params p;
 
 /* Set default values */
-  p.lat = -29.25627;
-  p.lon = -70.7380;
+  p.lat = 0.;  //-29.25627;
+  p.lon = 0.;  //-70.7380;
   p.ht_in_meters = 2400.;
   p.mjd = 58861.5;        /* 13 Jan 2020 12h UT */
   strcpy(p.date, "2020-01-13T12:00:00");
-  p.ra_deg = 90.5;        /* Default search coords in degrees */
-  p.de_deg = -30.3;
+  p.ra_deg = 0.;  //90.5;        /* Default search coords in degrees */
+  p.de_deg = 0.;  //-30.3;
   p.search_radius = 20.;  /* Default search radius in degrees */
   p.delta_time = 1;       /* Default time step (s) for second epoch pos. computation */
   p.max_sats = 1000;      /* Maximum number of satellites entries to retrieve */
@@ -479,6 +480,7 @@ int main(int argc, char **argv)
   		  close_stat_json(argc, argv, input_list, -1, errmsg, n_sats_found, n_sats, n_sunlit_sats);
 		  exit(-1);
 		}
+		in_geopos = true;
 		break;
           case 'n':
 		sscanf(argv[i] + par_pos, "%d", &p.max_sats);
@@ -530,6 +532,11 @@ int main(int argc, char **argv)
 /* Use default TLE repository dir. ? */
   if ( p.use_deftledir )
 	strcpy(tle_path, DEF_TLEDIR);
+
+  if ( !in_geopos ) {
+	Usage();
+	exit(0);
+  }
 
 /* Figure out where the observer really is in Cartesian coordinates of date */
   earth_lat_alt_to_parallax(p.lat * DEG2RAD, p.ht_in_meters, &rho_cos_phi, &rho_sin_phi);
@@ -593,7 +600,7 @@ int main(int argc, char **argv)
   p.lmst = lmst_hr(jd, p.lon, &p.gmst);
 
 /* For input geoloc or single satellite, use zenith coords if not given */
-  if ( p.geoloc_reference || (single_sat && !in_region) ) {
+  if ( p.geoloc_reference || single_sat || !in_region ) {
 	p.ra_deg = p.lmst * 15.;  
 	p.de_deg = p.lat;
 	target_ra = p.lmst / RAD2HRS;
@@ -768,6 +775,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 		SGP4(t_since, &tle, sat_params, pos, NULL);
 	}
 	get_satellite_ra_dec_delta(observer_loc, pos, &ra, &dec, &sep_to_satellite);
+
 /* For malformed or partial tle (e.g. Bepi-Colombo) this could happen */
 	if ( isnan(ra) || isnan(dec) ) {
 		sprintf(errmsg, "Could not decode TLE data");
@@ -787,6 +795,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 			continue;
 
 	epoch_of_date_to_j2000(jd, &ra, &dec);  /* Approx precession. Returned RA, Dec in radians. */
+
 
 /* Compute position delta_time seconds later to
    1. check if object enters the requested region,
@@ -828,7 +837,6 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 	  if ( p.geoloc_reference ) {
 		ang_sep = skysep_h(target_lon, target_lat, geo.lon * DEG2RAD, geo.lat * DEG2RAD);
 		ang_sep1 = 2 * ang_sep;  // dummy
-//printf("\ntarget_lon, target_lat, geo.lon, geo.lat, ang_sep, search_radius: %lf %lf  %lf %lf %lf  %lf\n", target_lon, target_lat, geo.lon, geo.lat, ang_sep, p.search_radius);
 	  } else {
 		ang_sep = skysep_h(target_ra, target_dec, ra, dec);
 		ang_sep1 = skysep_h(target_ra, target_dec, ra1, dec1);

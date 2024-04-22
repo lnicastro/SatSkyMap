@@ -57,3 +57,6 @@
 2023-07-08 LN, ver. 0.3e
 	- Added TLE files juice_2023.txt and euclid_2023.txt
 	- tle_retrieve.sh updated
+
+2024-04-22 LN, ver. 0.3f
+	- Removed default location and sky coords; check values were input
