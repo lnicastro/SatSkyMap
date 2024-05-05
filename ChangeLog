@@ -60,3 +60,6 @@
 
 2024-04-22 LN, ver. 0.3f
 	- Removed default location and sky coords; check values were input
+
+2024-05-05 LN, ver. 0.3f
+	- Fixed addition of the geoloc metadata for the -G option

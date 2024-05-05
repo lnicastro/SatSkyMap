@@ -108,7 +108,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 22/04/2024
+  LN @ INAF-OAS, Jan 2020.  Last change: 05/05/2024
 */
 
 #include <ctype.h>
@@ -608,12 +608,14 @@ int main(int argc, char **argv)
 	target_lon = p.lon * DEG2RAD;
   	target_lat = p.lat * DEG2RAD;
 	hareg = 0.;
-	add_geofieldsdesc_json();
   } else {
 	target_ra = p.ra_deg * DEG2RAD;
 	target_dec = p.de_deg * DEG2RAD;
 	hareg = p.lmst - p.ra_deg / 15.;
   }
+
+  if ( p.geoloc_requested )
+	add_geofieldsdesc_json();
 
 /* Alt, Az, Parang from Dec, HA, Lat */
   dechalat2alt(target_dec, hareg, p.lat, &p.alt, &p.az, &p.parang);
