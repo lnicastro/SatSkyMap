@@ -1,7 +1,7 @@
 /*
    Definitions for sat_skymap
   
-   LN @ INAF-OAS, Feb 2020                      Last change: 22/04/2024
+   LN @ INAF-OAS, Feb 2020                      Last change: 06/05/2024
 */
 
 #ifndef SAT_SKYMAP_DEF_H
@@ -18,7 +18,7 @@ const double AU_KM = 149597870.700;
 
 const char *progname = "sat_skymap",
 	*progauthor = "L. Nicastro @ INAF-OAS",
-       	*progdate = "2024-04-22",
+       	*progdate = "2024-05-06",
        	*progversion = "0.3f";
 
   typedef struct myParams {
@@ -81,7 +81,7 @@ const char *progname = "sat_skymap",
 extern "C" {
 #endif
 
-int date2mjd(char *date, double *mjd);
+int date2mjd_nf(char *date, double *mjd);
 char *mjd2date(double mjd);
 
 /* Haversine formula for spherical distance */

@@ -108,7 +108,7 @@
   }
 
 
-  LN @ INAF-OAS, Jan 2020.  Last change: 05/05/2024
+  LN @ INAF-OAS, Jan 2020.  Last change: 06/05/2024
 */
 
 #include <ctype.h>
@@ -452,7 +452,7 @@ int main(int argc, char **argv)
 		break;
           case 'd':
 		strcpy(p.date, argv[i] + par_pos);
-		date2mjd(argv[i] + par_pos, &p.mjd);
+		date2mjd_nf(argv[i] + par_pos, &p.mjd);
 		break;
  	  case 'D':
 		strcpy(tle_path, argv[i] + par_pos);
@@ -627,7 +627,7 @@ int main(int argc, char **argv)
 
   lpsun_radec(jd, &sun.ra, &sun.dec);
 
-/* Lon in [0, 360[ deg +W  (GEO_LON = -GHA = -(GMST - RA))*/
+/* Lon in [0, 360[ deg +W  (GEO_LON = -GHA = -(GMST - RA)) */
   sun.lon = fmod(sun.ra * RAD2DEG - p.gmst * 15. + 360., 360.);
   //sun.lon = fmod(p.gmst * 15. - 360. - sun.ra * RAD2DEG, 360.);
 
@@ -672,10 +672,10 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 
     char *lastchar;
     if ( !input_list ) {
-	if ( strchr(tle_file_name, '/') == NULL )
-	  sprintf(tle_path_file, "%s/%s", tle_path, argv[iarg]);
+	if ( strchr(p.tle_file_name, '/') == NULL )
+	  sprintf(tle_path_file, "%s/%s", tle_path, p.tle_file_name);
 	else
-	  strcpy(tle_path_file, tle_file_name);
+	  strcpy(tle_path_file, p.tle_file_name);
 	read_tle_list = false;
     } else {
 
@@ -691,6 +691,7 @@ printf("Sun HA, AZ, Alt, PA: %lf %lf %lf %lf (h, deg, deg, deg)\n", sun.ha, sun.
 	  continue;
 	sprintf(tle_path_file, "%s/%s", tle_path, tle_file_name);
     }
+//printf("\ntle_path_file: %s\n\n", tle_path_file);
  
     if ( !(ifile = fopen(tle_path_file, "rb")) ) {  /* Report error message and stop */
 	sprintf(errmsg, "Could not open input file %s", tle_path_file);

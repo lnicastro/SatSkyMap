@@ -1,6 +1,8 @@
 /*
    Low precision formulae for the sun, from Almanac p. C24 (1990).
    RA and Dec are returned in radians.
+
+  See also: https://aa.usno.navy.mil/faq/sun_approx
 */
 
 #include <math.h>
@@ -35,7 +37,7 @@ void lpsun_radec(double jd, double *ra, double *dec)
 {
   double n, g, lambda,epsilon,x,y,z;
 
-  n = jd - JD2000;
+  n = jd - JD2000;  // number of days from J2000.0
   g = (357.528 + 0.9856003 * n) * DEG2RAD;
   lambda = (280.460 + 0.9856474 * n + 1.915 * sin(g) + 0.020 * sin(2. * g)) * DEG2RAD;
   epsilon = (23.439 - 0.0000004 * n) * DEG2RAD;
