@@ -8,7 +8,7 @@
 
   Return '\0' for bad input date.
 
-  LN@INAF-OAS, Aug 2006                       Last change: 04/05/2021
+  LN@INAF-OAS, Aug 2006                       Last change: 07/05/2024
 */
 #include <stdlib.h>
 #include <stdio.h>
@@ -17,7 +17,7 @@
 static  const double DJMIN = -68569.5;
 static  const double DJMAX = 1e9;
 static  const double DJ1 = 2400000.5;
-
+static  const double HALF_S_IN_DAYS = 0.000005787037037037037e0;
 
 /* No fractional seconds */
 char *mjd2date(double mjd)
@@ -35,9 +35,9 @@ char *mjd2date(double mjd)
 /* Copy the date, big then small, and re-align to midnight. */
   if (DJ1 >= mjd) {
      d1 = DJ1;
-     d2 = mjd;
+     d2 = mjd + HALF_S_IN_DAYS;
   } else {
-     d1 = mjd;
+     d1 = mjd + HALF_S_IN_DAYS;
      d2 = DJ1;
   }
   d2 -= 0.5;
@@ -65,7 +65,7 @@ char *mjd2date(double mjd)
   f -= h/24.;
   mm = (int) (f*1440);
   f -= mm/1440.;
-  s = (int)(f*86400 + 0.5);
+  s = (int)(f*86400);
 
   sprintf(date, "%4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d", iy, im, id, h, mm, s);
 
@@ -121,7 +121,7 @@ char *mjd2datef(double mjd)
   f -= mm/1440.;
   s = (int)(f*86400);
   f -= s/86400.;
-  fs = (int)(f*8.64e7 + 0.5);
+  fs = (int)(f*8.64e7);
 
   sprintf(date, "%4d-%2.2d-%2.2dT%2.2d:%2.2d:%2.2d.%3.3d", iy, im, id, h, mm, s, fs);
 

@@ -67,3 +67,6 @@
 2024-05-06 LN, ver. 0.3f
 	- Fixed input TLE file name management
 	- Replaced date2mjd.c with the the simpler date2mjd_nf.c
+
+2024-05-07 LN, ver. 0.3f
+	- mjd2date.c updated to fix seconds=60 issue
