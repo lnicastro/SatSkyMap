@@ -9,16 +9,13 @@
 */
 double skysep_h(const double theta1, const double phi1, const double theta2, const double phi2)
 {
-  double radif, sin2a, sin2d,
-	 t1 = theta1, t2 = theta2;
+  double radif, sin2a, sin2d;
 
-// Manage Geodetic Lon which is in [-180, +180]. Do not check Phi
-  if ( theta1 < 0. )
-	t1 += TWOPI;
-  if ( theta2 < 0. )
-	t2 += TWOPI;
+// Manage Geodetic Lon which is in [-180, +180]. Do not check Phi.
+  double t1 = (theta1 < 0. ? theta1 + TWOPI : theta1);
+  double t2 = (theta2 < 0. ? theta2 + TWOPI : theta2);
 
-  radif  = fabs(theta2-theta1);
+  radif = fabs(t2-t1);
   if (radif > PI) radif = TWOPI - radif;
   sin2a = sin(radif/2.);
   sin2a *= sin2a;

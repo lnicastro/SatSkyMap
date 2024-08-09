@@ -6,7 +6,10 @@ The executable tool name is `sat_skymap`.
 
 [![DOI](https://zenodo.org/badge/256285121.svg)](https://zenodo.org/badge/latestdoi/256285121)
 
-An interactive [web tool](https://sats.oas.inaf.it/) is available at INAF-OAS Bologna.
+An interactive [web tool](https://sats.oas.inaf.it/) is available at INAF-OAS Bologna. This site also privides direct HTTPS queries via PHP wrapper.
+
+An additional tool to check for a given satellite visibility is provided too: `sat_visibility`. It can be invoked via HTTPS too.
+See below.
 
 ## Requirements
 Two Lines Element (TLE) files, possibly with *up-to-date parameters*. See [here](https://celestrak.com/columns/v04n03/) for a description.
@@ -40,28 +43,28 @@ Usage:
   sat_skymap tle_file [OPTIONS]
 
 OPTIONS are:
-  -a Alt_min,Alt_max	Geodetic altitude range filter (km; -G assumed by def.)
-  -d CalendarDate	Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
-  -D DirTLEs		Directory with the repository of TLE files (def. ./; ignore -T option)
-  -i SatIntnlName	Single satellite selection via its international designator (region ignored)
-  -j MJD		Modified Julian Date of interest (ignored if Calendar Date given)
-  -l Lat,Lon,Alt	Geodetic observing site (comma separated data with no spaces)
-  -n MaxSats		Maximum number of satellites to return (def. 1000)
-  -p RA,Dec		J2000 sky coordinates of region to check
-  -r radius		Region radius centered at the given coords
-  -s SatNorad_n		Single satellite selection via its NORAD number (region ignored)
-  -S SatName		Satellites selection via string name (substring matching applies; region ignored)
-  -t deltaT		Second epoch delta time (seconds; def. 1)
+  -a Alt_min,Alt_max  Geodetic altitude range filter (km; -G assumed by def.)
+  -d CalendarDate     Calendar date (UTC) of interest (in the form yyyy-mm-ddThh:mm:ss[.sss])
+  -D DirTLEs          Directory with the repository of TLE files (def. ./; ignore -T option)
+  -i SatIntnlName     Single satellite selection via its international designator (region ignored)
+  -j MJD              Modified Julian Date of interest (ignored if Calendar Date given)
+  -l Lat,Lon,Alt      Geodetic observing site (comma separated data with no spaces)
+  -n MaxSats          Maximum number of satellites to return (def. 1000)
+  -p RA,Dec           J2000 sky coordinates of region to check
+  -r radius           Region radius centered at the given coords
+  -s SatNorad_n       Single satellite selection via its NORAD number (region ignored)
+  -S SatName          Satellites selection via string name (substring matching applies; region ignored)
+  -t deltaT           Second epoch delta time (seconds; def. 1)
 
 Switches:
-  -h			print this help
-  -E			Use input geodetic location as reference location for region (-G by def.; -p ignored)
-  -G			Compute (and return) geodetic location for each satellite
-  -H			Compute sky separation via Haversine formula rather than cartesian triangle (suggested!)
-  -I			Only information about the returned data and number of satellites found
- 			('satellites' object not returned)
-  -T			Use default repository directory for TLE files (def. ./; see sat_skymap_def.h) 
-  -V			Return data only for sunlit satellites (potentially visible)
+  -h            print this help
+  -E            Use input geodetic location as reference location for region (-G by def.; -p ignored)
+  -G            Compute (and return) geodetic location for each satellite
+  -H            Compute sky separation via Haversine formula rather than cartesian triangle (suggested!)
+  -I            Only information about the returned data and number of satellites found
+                ('satellites' object not returned)
+  -T            Use default repository directory for TLE files (def. ./; see sat_skymap_def.h) 
+  -V            Return data only for sunlit satellites (potentially visible)
 
 Example usage:
   sat_skymap default.tle -l-29.25627,-70.73805,2400 -p90.5,-30.3 -j58861.5 -r20
@@ -345,6 +348,57 @@ JSON shown in expanded format.
    "n_sunlit_sats": 2
 }
 ```
+
+An example of direct HTTPS query:
+```
+https://sats.oas.inaf.it/get_sats.php?tlename=active&location=44.523,11.339,0&epoch=2024-08-09T12:47:33&deltat=10&coords=161.733,44.523&size_x=19.840&maxsats=2000&geoc=1
+```
+
+## Satellite visibility
+The tool `sat_visibility` can be used to check for a satellite visibility (sunlit) at a given site given its NORAD number or international designator.
+```shell
+% ./sat_visisbility -h
+Usage:
+  sat_visibility tle_file [OPTIONS]
+
+OPTIONS are:
+  -a Alt_min,Alt_max Geodetic altitude range filter (km)
+  -d CalendarDates   Calendar date (UTC) range of interest (in the form yyyy-mm-ddThh:mm:ss[.sss],yyyy-...)
+  -D DirTLEs         Directory with the repository of TLE files (def. ./; ignore -T option)
+  -i SatIntnlName    Satellite selection via its international designator
+  -j MJDs            Modified Julian Date range of interest (MJDstart,MJDend - ignored if Calendar Date given)
+  -l Lat,Lon,Alt     Geodetic observing site (comma separated data with no spaces)
+  -r radius          Region search radius - centred at the site zenith (degrees; def. 90)
+  -s SatNorad_n      Satellite selection via its NORAD number
+  -t deltaT          Visibility check delta time (seconds; def. 3)
+
+Switches:
+  -h                 Print this help
+  -N                 Skip visibility check until Sun is set - if it is up at start date
+  -T                 Use default repository directory for TLE files (def. ./; see sat_visibility_def.h)
+
+Example usage:
+  sat_visibility stations.txt -T -l44.52324,11.33914,23 -d2024-05-11T20:00:00,2024-05-11T22:00:00 -s 25544
+  sat_visibility stations.txt -T -t 10 -l-29.25627,-70.73805,2400 -j60436.54,60436.55 -s 25544
+```
+
+A JSON output string gives all the relevant information about the satellite and the sun position, in particucular:
+```
+    Times of Start/End/Mid of the visivility range.
+    The highest satellite altitude over the horizon.
+
+    Distance to satellite in km
+    Angular separation from the zenith
+    Position angle of motion
+    Apparent angular rate of motion in arcminutes/second
+```
+
+An example of direct HTTPS query:
+```
+https://sats.oas.inaf.it/get_visibility.php?tlename=active&location=44.523,11.339,0&epoch=2024-08-09T12:47:33&norad_n=43571&view
+```
+
+See the [web tool](https://sats.oas.inaf.it/) for automatically created query links.
 
 
 ## Acknowledgements

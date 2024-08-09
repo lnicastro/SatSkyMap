@@ -21,17 +21,17 @@ LDLIBS = $(HPXLIB) $(L) -lm
 DESTLIB = /usr/local/lib
 BINDIR = ${HOME}/bin
 
-VER = v03a_`/bin/date +"%Y%m%d"`
+VER = v03f_`/bin/date +"%Y%m%d"`
 dist = $(LNAME)_$(VER)
 
 
 LIBOBJS = sgp.o sgp4.o sgp8.o sdp4.o sdp8.o deep.o basics.o get_el.o common.o observe.o date2mjd_nf.o mjd2date.o skysep_h.o lmst_hr.o dechalat2alt.o lpsun_radec.o earthtilt.o zenith_site_ra.o
 LIBFILES = $(LIBOBJS:.o=.c)
 
-EXE = sat_skymap mjdnow
+EXE = sat_skymap sat_visibility mjdnow
 MAIN = $(EXE:=.c)
 
-EXTRAFILES = Makefile norad.h norad_in.h observe.h const_def.h sat_skymap_def.h stations.txt default.tle tle_retrive.sh $(HPXDIR)
+EXTRAFILES = Makefile norad.h norad_in.h observe.h const_def.h sat_skymap_def.h sat_visibility_def.h stations.txt default.tle tle_retrive.sh $(HPXDIR)
 
 all: lib libso libhpx $(EXE)
 
